@@ -2,7 +2,7 @@
     "name": "clickpdx/services", 
     "type": "library",
     "description": "Http services libraries.", 
-    "keywords": ["http service","service"],
+    "keywords": ["http service","services"],
     "homepage": "https://github.com/ocdladefense/clickpdx-services", 
     "license": "MIT",
     "authors": [
