@@ -1,6 +1,11 @@
 {
     "name": "clickpdx/services", 
     "type": "library",
+    "autoload": {
+        "psr-0": {
+            "Clickpdx\\": ["service/lib","salesforce/lib","resoure/lib","oauth/lib","http/lib"]
+        }
+    },
     "description": "Http services libraries.", 
     "keywords": ["http service","services"],
     "homepage": "https://github.com/ocdladefense/clickpdx-services", 
