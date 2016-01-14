@@ -2,7 +2,7 @@
 namespace Clickpdx;
 use \Exception;
 
-class SalesforceRestApiService extends \Clickpdx\Service\HttpService
+class SalesforceRestApiService extends Service\HttpService
 {
 	
 	private $executed;
@@ -31,7 +31,7 @@ class SalesforceRestApiService extends \Clickpdx\Service\HttpService
 	}
 	private function formatEndpoint($str,$params)
 	{
-		return \Stringifier\tokenize($str,$params);
+		return \tokenize($str,$params);
 	}
 	public function setEndpoint($endpointId,$params)
 	{
