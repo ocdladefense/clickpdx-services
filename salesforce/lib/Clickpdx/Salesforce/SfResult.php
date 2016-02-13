@@ -22,7 +22,6 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	public function __construct($apiResp)
 	{
 		$res = json_decode($apiResp->read(),true);
-		// print \entity_toString($res);exit;
 		$this->errorCode = $res[0]['errorCode'];
 		$this->errorMsg = $res[0]['message'];
 		$this->done = $res['done'];
@@ -53,6 +52,11 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	public function getFirst()
 	{
 		return $this->records[0];
+	}
+	
+	public function count()
+	{
+		return \count($this->records);
 	}
 	
 	public function getLast() {}

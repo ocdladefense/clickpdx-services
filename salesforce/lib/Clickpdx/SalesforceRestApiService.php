@@ -19,8 +19,19 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	private $endpoint;
 	
+	public function __construct(/*\OAuthParameterCollection*/$c)
+	{
+		if($c)
+		{
+			$this->setParams($c);
+		}
+		$this->accessToken=$this->getSessionData('accessToken');
+		$this->instanceUrl=$this->getSessionData('instanceUrl');
+	}
+	
 	public function setParams($c)
 	{
+		$this->appName = $c['entityId'];
 		$this->executed = false;
 		$this->soqlEndpoint = $c['soqlEndpoint'];
 		$this->serviceEndpoint = $c['serviceEndpoint'];
@@ -29,10 +40,12 @@ class SalesforceRestApiService extends Service\HttpService
 		$this->endpoints = $c['endpoints'];
 		$this->endpoint = $c['soqlEndpoint'];
 	}
+	
 	private function formatEndpoint($str,$params)
 	{
 		return \tokenize($str,$params);
 	}
+	
 	public function setEndpoint($endpointId,$params)
 	{
 		if(isset($params)&&count($params))
@@ -44,22 +57,27 @@ class SalesforceRestApiService extends Service\HttpService
 			$this->endpoint=$this->getEndpoint($endpointId);
 		}
 	}
+	
 	public function getEndpoint($endpointId)
 	{
 		return $this->endpoints[$endpointId];
 	}
+	
 	public function setAccessToken($token)
 	{
 		$this->accessToken=$token;
 	}
+	
 	public function getAccessToken()
 	{
 		return $this->accessToken;
 	}
+	
 	public function setInstanceUrl($url)
 	{
 		$this->instanceUrl=$url;	
 	}
+	
 	public function soqlQuery($query)
 	{
 		$this->soqlQuery=$query;
@@ -82,6 +100,7 @@ class SalesforceRestApiService extends Service\HttpService
 	{
 		return $this->serviceEndpoint;
 	}
+	
 	public function getActiveEndpoint()
 	{
 		return $this->endpoint;
@@ -156,20 +175,7 @@ class SalesforceRestApiService extends Service\HttpService
     }
 		return $sResp;
 	}
-
-
-
-
-	public function __construct(/*\OAuthParameterCollection*/$c)
-	{
-		$this->appName='memDir';
-		if($c)
-		{
-			$this->setOauth($c);
-		}
-		$this->accessToken=$this->getSessionData('accessToken');
-		$this->instanceUrl=$this->getSessionData('instanceUrl');
-	}
+	
 	public function __toString()
 	{
 		$s[]= "Executed: {$this->executed}.";

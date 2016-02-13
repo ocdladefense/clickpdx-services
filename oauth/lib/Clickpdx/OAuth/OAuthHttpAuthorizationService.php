@@ -176,7 +176,7 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 	{
 		if($c)
 		{
-			$this->setOauth($c);
+			$this->setOAuthParams($c);
 		}
 	}
 	public function __toString()
