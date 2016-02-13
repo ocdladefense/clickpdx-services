@@ -19,6 +19,9 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 	
 	private $executed;
 	
+	private $username;
+	
+	private $password;
 	
 
 	public function setOAuthParams($c)
@@ -30,6 +33,8 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 		$this->redirectUri = $c['redirectUri'];
 		$this->authEndpoint = $c['authEndpoint'];
 		$this->accessTokenEndpoint = $c['accessTokenEndpoint'];
+		$this->username = $c['username'];
+		$this->password = $c['password'];
 	}
 	public function setAuthorizationCode($code)
 	{
@@ -82,6 +87,9 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 			case OAuthGrantTypes::GRANT_AUTHORIZATION_CODE:
 				$req = new \Clickpdx\Http\HttpPostRequest($this->loginUri . $this->accessTokenEndpoint);
 				break;
+			case OAuthGrantTypes::GRANT_PASSWORD:
+				$req = new \Clickpdx\Http\HttpPostRequest($this->loginUri . $this->accessTokenEndpoint);
+				break;
 		}
 		$req->addParams($this->getRequestParamsByAuthorizationGrantType($authorizationGrantType));
 		return $req;
@@ -117,7 +125,13 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 					'redirect_uri' 			=> array($this->redirectUri,true),
 				);
 			case OAuthGrantTypes::GRANT_PASSWORD:
-				break;
+				$params = array(
+					'grant_type'				=> array('password',false),
+					'client_id' 				=> array($this->consumerId,false),
+					'client_secret'			=> array($this->clientSecret,false),
+					'username' 					=> array($this->username,false),
+					'password' 					=> array($this->password,false),
+				);
 		}
 		return $params;
 	}

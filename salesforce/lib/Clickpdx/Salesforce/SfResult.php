@@ -6,6 +6,8 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 {
 	private $errorCode;
 	
+	private $errorMsg;
+	
 	private $done;
 	
 	/**
@@ -20,7 +22,9 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	public function __construct($apiResp)
 	{
 		$res = json_decode($apiResp->read(),true);
-		$this->errorCode = $res['errorCode'];
+		// print \entity_toString($res);exit;
+		$this->errorCode = $res[0]['errorCode'];
+		$this->errorMsg = $res[0]['message'];
 		$this->done = $res['done'];
 		$this->records = $res['records'];
 		$this->fields = array_keys($this->getFirst());
@@ -61,6 +65,11 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	public function hasError()
 	{
 		return !empty($this->errorCode);
+	}
+	
+	public function getErrorMsg()
+	{
+		return $this->errorMsg;
 	}
 	
 	public function getFields()
