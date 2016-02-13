@@ -39,6 +39,8 @@ class SalesforceRestApiService extends Service\HttpService
 		$this->clientSecret = $c['clientSecret'];
 		$this->endpoints = $c['endpoints'];
 		$this->endpoint = $c['soqlEndpoint'];
+		$this->accessToken=$this->getSessionData('accessToken');
+		$this->instanceUrl=$this->getSessionData('instanceUrl');
 	}
 	
 	private function formatEndpoint($str,$params)
@@ -154,11 +156,13 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function setOAuthSession($accessToken)
 	{
+		$this->accessToken = $accessToken;
 		$this->setSessionData('accessToken',$accessToken);
 	}
 	
 	public function saveInstanceUrlSession($instanceUrl)
 	{
+		$this->instanceUrl = $instanceUrl;
 		$this->setSessionData('instanceUrl',$instanceUrl);	
 	}
 
@@ -178,12 +182,13 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function __toString()
 	{
+		$s[]= "AppId: {$this->appName}";
 		$s[]= "Executed: {$this->executed}.";
 		$s[]= "endpoint: {$this->endpoint}.";
 		$s[]= "soqlEndpoint: {$this->soqlEndpoint}.";
 		$s[]= "consumerId: {$this->consumerId}.";		
 		$s[]= "soqlQuery: {$this->soqlQuery}.";
 		$s[]= "instanceUrl: {$this->instanceUrl}.";
-		return implode('<br />',$s);
+		return "<p style='background-color:#eee;'>".implode('<br />',$s)."</p>";
 	}
 }
