@@ -44,6 +44,7 @@ class HttpRequest extends HttpMessage implements IWriteable
 	{
 		return parent::__toString();
 	}
+	
 	public function getAsHttpRedirect($redirectCode=302)
 	{
 		return new HttpRedirect($this->getUrl());
