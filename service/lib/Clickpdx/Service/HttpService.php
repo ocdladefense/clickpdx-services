@@ -84,6 +84,15 @@ abstract class HttpService
 		return $_SESSION[$this->appName][$name];
 	}
 	
+	protected function clearSessionData($key)
+	{
+		$this->initServiceSession();
+		if(!isset($_SESSION[$this->appName][$key]))
+			throw new \Exception("$key is not a valid session key for this application.");
+		else unset($_SESSION[$this->appName][$key]);
+	}
+	
+	
 	public function createHttpRequest($url,$type='GET')
 	{
 		switch($type)

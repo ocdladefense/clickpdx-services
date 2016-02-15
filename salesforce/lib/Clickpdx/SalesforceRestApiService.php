@@ -75,6 +75,16 @@ class SalesforceRestApiService extends Service\HttpService
 		return $this->accessToken;
 	}
 	
+	public function deleteAccessToken()
+	{
+		$this->clearSessionData('accessToken');
+	}
+	
+	public function getInstanceUrl()
+	{
+		return $this->instanceUrl;
+	}
+	
 	public function setInstanceUrl($url)
 	{
 		$this->instanceUrl=$url;	
