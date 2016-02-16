@@ -24,6 +24,8 @@ abstract class HttpService
 	protected $httpRequest;
 	
 	protected $writeHandlers = array();
+	
+	protected $authenticationService;
 
 	public abstract function makeHttpRequest($type);
 	
@@ -40,12 +42,7 @@ abstract class HttpService
 	public function sendRequest(HttpRequest $req)
 	{
 		$resp = new HttpResponse();
-
 		$resp->setBody($req->writeUsingDelegate($this->getWriteHandler('POST')));
-		// setHeaders
-		// setResponseCode
-		// setResponseBody
-		// setHandler
 		return $resp;
 	}
 	
@@ -55,6 +52,11 @@ abstract class HttpService
 		{
 				session_start();
 		}
+	}
+	
+	public function setAuthenticationService(HttpService $svc)
+	{
+		$this->authenticationService = $svc;
 	}
 	
 	protected function destroyServiceSessionData()

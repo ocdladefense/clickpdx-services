@@ -1,6 +1,11 @@
 <?php
 namespace Clickpdx;
 use \Exception;
+use Clickpdx\OAuth\OAuthGrantTypes;
+use Clickpdx\SfRestApiRequestTypes;
+use Clickpdx\Http\HttpRequest;
+use Clickpdx\Salesforce\SfResult;
+use Clickpdx\Salesforce\RestApiAuthenticationException;
 
 class SalesforceRestApiService extends Service\HttpService
 {
@@ -43,6 +48,72 @@ class SalesforceRestApiService extends Service\HttpService
 		$this->instanceUrl=$this->getSessionData('instanceUrl');
 	}
 	
+	public function authorize()
+	{
+		// Return an HttpRequest object to be sent to the Authorization Server.
+		$req = $this->authenticationService->getHttpRequest(OAuthGrantTypes::GRANT_PASSWORD);
+	
+		// Get a Redirect object whose output can be sent to the User-Agent.
+		// This basically redirects the user to the Authorization Server per the
+		// above Request.
+		$oauthResponse = $this->authenticationService->sendRequest($req);
+		$data = json_decode($oauthResponse->read(),true);
+		if($data['error'])
+		{
+			print "<h2>Error: {$data['error_description']}</h2>";
+			throw new Exception($data['error_description']);
+			// throw new AuthenticationException($data['error_description']);
+		}
+		$this->setOAuthSession($data['access_token']);
+		$this->saveInstanceUrlSession($data['instance_url']);
+		return $oauthResponse;
+	}
+	
+	public function executeQuery($query)
+	{
+		$this->soqlQuery($query);
+		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_SOQL);
+		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
+		$apiResp = parent::sendRequest($apiReq);
+		$sfResult = new SfResult($apiResp);
+		// print $apiResp;
+		// exit;
+
+		if($sfResult->hasError())
+		{
+			if($sfResult->getErrorCode() == 'INVALID_SESSION_ID')
+			{
+				throw new RestApiAuthenticationException($sfResult->getErrorMsg());
+			}
+			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.");
+		}
+		return $sfResult;
+	}
+	
+	public function getObjectInfo($forceObjectName)
+	{
+		$this->soqlQuery($query);
+		$this->setEndpoint('sobject',array('object'=>$forceObjectName));
+		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
+		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
+		$apiResp = parent::sendRequest($apiReq);
+		return json_decode($apiResp->read(),true);
+		
+		$sfResult = new SfResult($apiResp);
+		// print $apiResp;
+		// exit;
+
+		if($sfResult->hasError())
+		{
+			if($sfResult->getErrorCode() == 'INVALID_SESSION_ID')
+			{
+				throw new RestApiAuthenticationException($sfResult->getErrorMsg());
+			}
+			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.");
+		}
+		return $sfResult;
+	}
+	
 	private function formatEndpoint($str,$params)
 	{
 		return \tokenize($str,$params);
@@ -77,7 +148,28 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function deleteAccessToken()
 	{
-		$this->clearSessionData('accessToken');
+		$this->accessToken = null;
+		try
+		{
+			$this->clearSessionData('accessToken');
+		}
+		catch(\Exception $e)
+		{
+			throw new \Exception("Error when trying to delete accessToken: {$e->getMessage()}");
+		}
+	}
+	
+	public function deleteInstanceUrl()
+	{
+		$this->instanceUrl = null;
+		try
+		{
+			$this->clearSessionData('instanceUrl');
+		}
+		catch(\Exception $e)
+		{
+			throw new \Exception("Error when trying to delete instanceUrl: {$e->getMessage()}");
+		}
 	}
 	
 	public function getInstanceUrl()
@@ -93,6 +185,11 @@ class SalesforceRestApiService extends Service\HttpService
 	public function soqlQuery($query)
 	{
 		$this->soqlQuery=$query;
+	}
+	
+	public function getSoqlQuery()
+	{
+		return $this->soqlQuery;
 	}
 	
 	public function makeHttpResponse(){}

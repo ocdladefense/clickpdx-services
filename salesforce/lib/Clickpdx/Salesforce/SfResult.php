@@ -19,9 +19,11 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	
 	private $fields;
 	
+	private $res;
+	
 	public function __construct($apiResp)
 	{
-		$res = json_decode($apiResp->read(),true);
+		$this->res = $res = json_decode($apiResp->read(),true);
 		$this->errorCode = $res[0]['errorCode'];
 		$this->errorMsg = $res[0]['message'];
 		$this->done = $res['done'];
@@ -29,7 +31,8 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 		$this->fields = array_keys($this->getFirst());
 	}
 	
-	public function offsetSet($offset, $value) {
+	public function offsetSet($offset, $value)
+	{
 			if (is_null($offset)) {
 					$this->records[] = $value;
 			} else {
@@ -37,15 +40,18 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 			}
 	}
 
-	public function offsetExists($offset) {
+	public function offsetExists($offset)
+	{
 			return isset($this->records[$offset]);
 	}
 
-	public function offsetUnset($offset) {
+	public function offsetUnset($offset)
+	{
 			unset($this->records[$offset]);
 	}
 
-	public function offsetGet($offset) {
+	public function offsetGet($offset)
+	{
 			return isset($this->records[$offset]) ? $this->records[$offset] : null;
 	}
 	
@@ -76,6 +82,11 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 		return $this->errorMsg;
 	}
 	
+	public function getErrorCode()
+	{
+		return $this->errorCode;
+	}
+	
 	public function getFields()
 	{
 		return $this->fields;
@@ -100,6 +111,7 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	
 	public function __toString()
 	{
+		return \entity_toString($this->res);
 		return "<p style='background-color:#eee;'>".implode(',',$this->fields)."</p>".implode('<br />',$this->map(function($record){
 			return $record['Id'] . ': '.$record['Name'];
 		}));
