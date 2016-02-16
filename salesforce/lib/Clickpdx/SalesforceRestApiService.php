@@ -58,7 +58,6 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function authorize()
 	{
-		print "<br />Authorizing app...";
 		// Return an HttpRequest object to be sent to the Authorization Server.
 		$req = $this->authenticationService->getHttpRequest(OAuthGrantTypes::GRANT_PASSWORD);
 	
@@ -114,6 +113,10 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function getObjectInfo($forceObjectName)
 	{
+		if(!$this->hasInstanceUrl())
+		{
+			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
+		}
 		$this->soqlQuery($query);
 		$this->setEndpoint('sobject',array('object'=>$forceObjectName));
 		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
@@ -138,7 +141,11 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	function sfObjectsInfo($object)
 	{
-		$svc = ResourceLoader::getResource('sfMemdir');
+		if(!$this->hasInstanceUrl())
+		{
+			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
+		}
+		$svc = ResourceLoader::getResource('forceApi');
 		$svc->setEndpoint('sobjects');
 		$apiReq=$svc->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$svc->getAccessToken()}");
