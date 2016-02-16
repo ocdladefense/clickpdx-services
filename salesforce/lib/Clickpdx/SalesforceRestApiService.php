@@ -114,6 +114,21 @@ class SalesforceRestApiService extends Service\HttpService
 		return $sfResult;
 	}
 	
+	function sfObjectsInfo($object)
+	{
+		$svc = ResourceLoader::getResource('sfMemdir');
+		$svc->setEndpoint('sobjects');
+		$apiReq=$svc->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
+		$apiReq->addHttpHeader('Authorization',"OAuth {$svc->getAccessToken()}");
+		$apiResp = $svc->sendRequest($apiReq);
+		$apiInfo = json_decode($apiResp->read(),true);
+		if($apiInfo['errorCode'])
+		{
+			$svc->resetOAuthSession();
+		}
+		return $apiInfo;
+	}
+	
 	private function formatEndpoint($str,$params)
 	{
 		return \tokenize($str,$params);
