@@ -6,6 +6,7 @@ use Clickpdx\SfRestApiRequestTypes;
 use Clickpdx\Http\HttpRequest;
 use Clickpdx\Salesforce\SfResult;
 use Clickpdx\Salesforce\RestApiAuthenticationException;
+use Clickpdx\Salesforce\RestApiInvalidUrlException;
 
 class SalesforceRestApiService extends Service\HttpService
 {
@@ -24,6 +25,8 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	private $endpoint;
 	
+	private $debug;
+	
 	public function __construct(/*\OAuthParameterCollection*/$c)
 	{
 		if($c)
@@ -32,6 +35,11 @@ class SalesforceRestApiService extends Service\HttpService
 		}
 		$this->accessToken=$this->getSessionData('accessToken');
 		$this->instanceUrl=$this->getSessionData('instanceUrl');
+	}
+	
+	public function setDebug($init=false)
+	{
+		$this->debug = $init;
 	}
 	
 	public function setParams($c)
@@ -50,6 +58,7 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function authorize()
 	{
+		print "<br />Authorizing app...";
 		// Return an HttpRequest object to be sent to the Authorization Server.
 		$req = $this->authenticationService->getHttpRequest(OAuthGrantTypes::GRANT_PASSWORD);
 	
@@ -71,12 +80,25 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function executeQuery($query)
 	{
+		if(!$this->hasInstanceUrl())
+		{
+			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
+		}
 		$this->soqlQuery($query);
+		if($this->debug)
+		{
+			print "<br />".$this->getSoqlQuery();
+			print "<br />Access Token is: ".$this->getAccessToken();
+		}
 		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_SOQL);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
 		$apiResp = parent::sendRequest($apiReq);
 		$sfResult = new SfResult($apiResp);
-		// print $apiResp;
+		if($this->debug)
+		{
+			print "Response length is: ".count($apiResp->__toString());
+			print_r($apiResp);
+		}
 		// exit;
 
 		if($sfResult->hasError())
@@ -161,6 +183,8 @@ class SalesforceRestApiService extends Service\HttpService
 		return $this->accessToken;
 	}
 	
+
+	
 	public function deleteAccessToken()
 	{
 		$this->accessToken = null;
@@ -195,6 +219,11 @@ class SalesforceRestApiService extends Service\HttpService
 	public function setInstanceUrl($url)
 	{
 		$this->instanceUrl=$url;	
+	}
+	
+	public function hasInstanceUrl()
+	{
+		return !empty($this->instanceUrl);
 	}
 	
 	public function soqlQuery($query)

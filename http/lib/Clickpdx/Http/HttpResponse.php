@@ -11,13 +11,14 @@ class HttpResponse extends HttpMessage implements IReadable
 	{
 		$this->body .= $str;
 	}
+	
 	public function read()
 	{
 		return $this->body;
 	}
+	
 	public function __toString()
 	{
-		return '<p /><b>Response body is:</b><br />'.$this->body;
-		return parent::__toString();
+		$this->body;
 	}
 }
