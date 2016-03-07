@@ -104,7 +104,7 @@ class SalesforceRestApiService extends Service\HttpService
 		{
 			if($sfResult->getErrorCode() == 'INVALID_SESSION_ID')
 			{
-				throw new RestApiAuthenticationException($sfResult->getErrorMsg());
+				throw new RestApiAuthenticationException("Accessing the API Service at {$this->getInstanceUrl()} failed with error code: \n{$sfResult->getErrorCode()}.\n<br />".$sfResult->getErrorMsg());
 			}
 			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.");
 		}
@@ -117,7 +117,7 @@ class SalesforceRestApiService extends Service\HttpService
 		{
 			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
 		}
-		$this->soqlQuery($query);
+		// $this->soqlQuery($query);
 		$this->setEndpoint('sobject',array('object'=>$forceObjectName));
 		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");

@@ -15,20 +15,46 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	 *
 	 * The actual records returned from the SOQL query.
 	 */
-	private $records;
+	private $records = array();
 	
-	private $fields;
+	private $fields = array();
 	
 	private $res;
 	
+	private $totalSize;
+	
+	private $comments = array();
+	
 	public function __construct($apiResp)
 	{
+		if(isset($apiResp))
+		{
 		$this->res = $res = json_decode($apiResp->read(),true);
 		$this->errorCode = $res[0]['errorCode'];
 		$this->errorMsg = $res[0]['message'];
 		$this->done = $res['done'];
 		$this->records = $res['records'];
+		$this->totalSize = $res['totalSize'];
 		$this->fields = array_keys($this->getFirst());
+		}
+	}
+	
+	public function add(SfResult $result)
+	{
+		// $this->res = $res = json_decode($apiResp->read(),true);
+		/*
+		$this->errorCode = $res[0]['errorCode'];
+		$this->errorMsg = $res[0]['message'];
+		$this->done = $res['done'];
+		*/
+		$this->records 			= array_merge($this->records,$result->fetchAll());
+		$this->totalSize 		= $this->count() + $result->count();
+		// $this->fields 			= array_keys($this->getFirst());
+	}
+	
+	public function getJson()
+	{
+		return $this->res;
 	}
 	
 	public function offsetSet($offset, $value)
@@ -62,10 +88,13 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	
 	public function count()
 	{
-		return \count($this->records);
+		return isset($this->totalSize) ? $this->totalSize : 0;
 	}
 	
-	public function getLast() {}
+	public function getLast()
+	{
+		return $this->records[count($this->records)-1];
+	}
 	
 	public function fetchAll()
 	{
@@ -107,6 +136,21 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 		}
 
 		return $result;
+	}
+	
+	public function addComment($data,$tag=null)
+	{
+		$this->comments[(empty($tag)?null:$tag)] = $data;
+	}
+	
+	public function getComment($tag)
+	{
+		return $this->comments[$tag];
+	}
+	
+	public function getComments()
+	{
+		return $this->comments;
 	}
 	
 	public function __toString()
