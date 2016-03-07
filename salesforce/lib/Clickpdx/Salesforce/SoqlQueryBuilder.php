@@ -104,16 +104,38 @@ class SoqlQueryBuilder
 		return $this->conditions;
 	}
 	
-	public function condition($condition)
+	public function condition(
+		$colName,
+		$colValue,
+		$op = SoqlQueryBuilder::QUERY_OP_EQUALITY
+	)
 	{
-		if(is_array($condition))
-		{
-			$this->conditions = array_merge($this->conditions,$condition);
-		}
-		else
-		{
-			$this->conditions[] = $condition;
-		}
+		$parts = array(
+			'colName' 	=> $colName,
+			'op' 				=> $op,
+			'colValue'	=> is_string($colValue) ?
+				"'{$colValue}'" : $colValue
+		);
+		$this->conditions[] = implode(' ',$parts);
+	}
+	
+	public function dateCondition(
+		$colName,
+		$colValue,
+		$op = SoqlQueryBuilder::QUERY_OP_EQUALITY
+	)
+	{
+		$parts = array(
+			'colName' 	=> $colName,
+			'op' 				=> $op,
+			'colValue'	=> $colValue
+		);
+		$this->conditions[] = implode(' ',$parts);
+	}
+	
+	public function replaceConditions(array $conditions)
+	{
+		$this->conditions = $conditions;
 	}
 	
 	private function formatConditions()
@@ -150,7 +172,7 @@ class SoqlQueryBuilder
 		$countQuery = new self();
 		$countQuery->table($this->table);
 		$countQuery->cols('COUNT()');
-		$countQuery->condition($this->getConditions());
+		$countQuery->replaceConditions($this->getConditions());
 		return $countQuery;
 	}
 	

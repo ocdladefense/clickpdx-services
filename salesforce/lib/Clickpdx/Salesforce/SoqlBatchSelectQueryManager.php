@@ -38,6 +38,11 @@ class SoqlBatchSelectQueryManager
 		return $this;
 	}
 	
+	public function updatedAfterDate($date)
+	{
+		$this->updateAfterDate = $date.'T01:02:03Z';
+	}
+	
 	public function execute()
 	{
 		$curBatch = 1;
@@ -51,11 +56,19 @@ class SoqlBatchSelectQueryManager
 		$query->cols($this->columns);
 		$query->orderBy($this->breakColumn);
 		$query->limit($this->batchSize);
-		// print $query;
-	
+		if(isset($this->updateAfterDate))
+		{
+			$query->dateCondition('LastModifiedDate',
+					$this->updateAfterDate,
+					SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
+		}
+		if(!$this->soqlService->hasInstanceUrl())
+		{
+			$this->soqlService->authorize();
+		}
 		$numRecordsToProcess = $this->soqlService->executeQuery($query->getCountQuery()->compile())->count();
 		$expectedNumBatches = $numRecordsToProcess/$batchSize;
-		// print $countQuery;
+
 	
 		// Instantiate an empty result set.
 		//	+ We'll use this as a container for SOQL Contact results,
@@ -66,7 +79,7 @@ class SoqlBatchSelectQueryManager
 			// print "<br />Starting batch {$curBatch}...";
 			if($curBatch != 1)
 			{
-				$query->where('Ocdla_Auto_Number_Int__c',
+				$query->condition('Ocdla_Auto_Number_Int__c',
 					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
 			}
 			$queries[] = $q = $query->compile();

@@ -34,7 +34,7 @@ class ForceToMySqlDataTransferManager
 	
 	// throws a InvalidConnectionException
 	// throws a SettingNotFoundException
-	public function __construct($forceObjectName)
+	public function __construct($forceObjectName,$updatedAfterDate=null)
 	{
 		$this->forceObjectName = $forceObjectName;
 		$soqlService = $this->prepareApiService();
@@ -44,6 +44,7 @@ class ForceToMySqlDataTransferManager
 		$this->soqlManager->setTable($forceObjectName);
 		$this->soqlManager->setColumns(\setting($settingPrefix.'.fields'));
 		$this->soqlManager->setBreakColumn(\setting($settingPrefix.'.breakField'));
+		$this->soqlManager->updatedAfterDate($updatedAfterDate);
 	}
 
 	public function export()
@@ -51,6 +52,13 @@ class ForceToMySqlDataTransferManager
 		return $this->soqlManager->execute();
 	}
 	
+	/**
+	 * 
+	 * See:
+	 * http://docs.doctrine-project.org/projects/
+	 *	+ doctrine-dbal/en/latest/reference/data-retrieval-and-manipulation.html
+	 * 	+ for more information
+	 */
 	public function import(SfResult $result)
 	{
 		$counter = 0;
