@@ -15,6 +15,8 @@ class SoqlBatchSelectQueryManager
 	
 	private $soqlService;
 	
+	private $updatedAfterDate;
+	
 	public function __construct($soqlService,$table=null,$columns=array(),$breakColumn=null)
 	{
 		$this->soqlService = $soqlService;
@@ -38,9 +40,12 @@ class SoqlBatchSelectQueryManager
 		return $this;
 	}
 	
-	public function updatedAfterDate($date)
+	public function setUpdatedAfterDate($date=null)
 	{
-		$this->updateAfterDate = $date.'T01:02:03Z';
+		if(!empty($date))
+		{
+			$this->updatedAfterDate = $date.'T01:02:03Z';
+		}
 	}
 	
 	public function execute()
@@ -56,10 +61,10 @@ class SoqlBatchSelectQueryManager
 		$query->cols($this->columns);
 		$query->orderBy($this->breakColumn);
 		$query->limit($this->batchSize);
-		if(isset($this->updateAfterDate))
+		if(!empty($this->updatedAfterDate))
 		{
 			$query->dateCondition('LastModifiedDate',
-					$this->updateAfterDate,
+					$this->updatedAfterDate,
 					SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
 		}
 		if(!$this->soqlService->hasInstanceUrl())
@@ -98,7 +103,20 @@ class SoqlBatchSelectQueryManager
 
 	public function toMysqlInsertQuery()
 	{
-		return 'INSERT IGNORE INTO force_contact(LastModifiedDate,Ocdla_Auto_Number_Int__c,Id,AccountId,Title,FirstName,LastName,MailingStreet,MailingCity,MailingState,MailingPostalCode,OrderApi__Work_Phone__c,OrderApi__Work_Email__c,Fax) VALUES(:LastModifiedDate,:Ocdla_Auto_Number_Int__c,:Id,:AccountId,:Title,:FirstName,:LastName,:MailingStreet,:MailingCity,:MailingState,:MailingPostalCode,:OrderApi__Work_Phone__c,:OrderApi__Work_Email__c,:Fax)';
+		return 'INSERT INTO force_contact(LastModifiedDate,Ocdla_Auto_Number_Int__c,Id,AccountId,Title,FirstName,LastName,MailingStreet,MailingCity,MailingState,MailingPostalCode,OrderApi__Work_Phone__c,OrderApi__Work_Email__c,Fax) VALUES(:LastModifiedDate,:Ocdla_Auto_Number_Int__c,:Id,:AccountId,:Title,:FirstName,:LastName,:MailingStreet,:MailingCity,:MailingState,:MailingPostalCode,:OrderApi__Work_Phone__c,:OrderApi__Work_Email__c,:Fax) ON DUPLICATE KEY UPDATE 
+			LastModifiedDate=VALUES(LastModifiedDate),
+			Ocdla_Auto_Number_Int__c=VALUES(Ocdla_Auto_Number_Int__c),
+			AccountId=VALUES(AccountId),
+			Title=VALUES(Title),
+			FirstName=VALUES(FirstName),
+			LastName=VALUES(LastName),
+			MailingStreet=VALUES(MailingStreet),
+			MailingCity=VALUES(MailingCity),
+			MailingState=VALUES(MailingState),
+			MailingPostalCode=VALUES(MailingPostalCode),
+			OrderApi__Work_Phone__c=VALUES(OrderApi__Work_Phone__c),
+			OrderApi__Work_Email__c=VALUES(OrderApi__Work_Email__c),
+			Fax=VALUES(Fax)';
 	}
 
 

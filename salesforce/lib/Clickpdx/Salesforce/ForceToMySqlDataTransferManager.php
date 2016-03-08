@@ -44,7 +44,7 @@ class ForceToMySqlDataTransferManager
 		$this->soqlManager->setTable($forceObjectName);
 		$this->soqlManager->setColumns(\setting($settingPrefix.'.fields'));
 		$this->soqlManager->setBreakColumn(\setting($settingPrefix.'.breakField'));
-		$this->soqlManager->updatedAfterDate($updatedAfterDate);
+		$this->soqlManager->setUpdatedAfterDate($updatedAfterDate);
 	}
 
 	public function export()
