@@ -17,6 +17,10 @@ class SoqlBatchSelectQueryManager
 	
 	private $updatedAfterDate;
 	
+	private $keys = array();
+	
+	const MySQLTablePrefix = 'force';
+	
 	public function __construct($soqlService,$table=null,$columns=array(),$breakColumn=null)
 	{
 		$this->soqlService = $soqlService;
@@ -44,7 +48,7 @@ class SoqlBatchSelectQueryManager
 	{
 		if(!empty($date))
 		{
-			$this->updatedAfterDate = $date.'T01:02:03Z';
+			$this->updatedAfterDate = $date.'T00:00:00Z';
 		}
 	}
 	
@@ -101,23 +105,48 @@ class SoqlBatchSelectQueryManager
 		return $results;
 	}
 
+	public function setKeys($colNames)
+	{
+		$this->keys = $colNames;
+	}
+	
+	public function setKey($colName)
+	{
+		$this->keys = array($colName);
+	}
+
+	private function getTable()
+	{
+		return self::MySQLTablePrefix .'_'.strtolower($this->table);
+	}
+
+	private function getValueBindings()
+	{
+		$ret = array_map(function($colName){
+			return ':'.$colName;
+		},$this->columns);
+		return implode(',',$ret);
+	}
+
+	private function getInsertPart()
+	{
+		return implode(',',$this->columns);
+	}
+	
+	private function getUpdatePart()
+	{
+		$tmp = array_diff($this->columns,$this->keys);
+		$ret = array_map(function($colName){
+			return $colName . '=VALUES('.$colName.')';
+		},$tmp);
+		return implode(',',$ret);
+	}
+
 	public function toMysqlInsertQuery()
 	{
-		return 'INSERT INTO force_contact(LastModifiedDate,Ocdla_Auto_Number_Int__c,Id,AccountId,Title,FirstName,LastName,MailingStreet,MailingCity,MailingState,MailingPostalCode,OrderApi__Work_Phone__c,OrderApi__Work_Email__c,Fax) VALUES(:LastModifiedDate,:Ocdla_Auto_Number_Int__c,:Id,:AccountId,:Title,:FirstName,:LastName,:MailingStreet,:MailingCity,:MailingState,:MailingPostalCode,:OrderApi__Work_Phone__c,:OrderApi__Work_Email__c,:Fax) ON DUPLICATE KEY UPDATE 
-			LastModifiedDate=VALUES(LastModifiedDate),
-			Ocdla_Auto_Number_Int__c=VALUES(Ocdla_Auto_Number_Int__c),
-			AccountId=VALUES(AccountId),
-			Title=VALUES(Title),
-			FirstName=VALUES(FirstName),
-			LastName=VALUES(LastName),
-			MailingStreet=VALUES(MailingStreet),
-			MailingCity=VALUES(MailingCity),
-			MailingState=VALUES(MailingState),
-			MailingPostalCode=VALUES(MailingPostalCode),
-			OrderApi__Work_Phone__c=VALUES(OrderApi__Work_Phone__c),
-			OrderApi__Work_Email__c=VALUES(OrderApi__Work_Email__c),
-			Fax=VALUES(Fax)';
+		return 'INSERT INTO ' . $this->getTable() .'(' .$this->getInsertPart() .')' .' VALUES('.$this->getValueBindings().') ON DUPLICATE KEY UPDATE '. $this->getUpdatePart();
 	}
+	
 
 
 }

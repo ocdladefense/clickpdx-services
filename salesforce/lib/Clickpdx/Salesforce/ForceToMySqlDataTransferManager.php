@@ -16,6 +16,8 @@ class ForceToMySqlDataTransferManager
 	
 	private $mysqlTable;
 	
+	private $comments = array();
+	
 	private function prepareApiService()
 	{
 		$forceApi = ResourceLoader::getResource('forceApi');
@@ -45,6 +47,18 @@ class ForceToMySqlDataTransferManager
 		$this->soqlManager->setColumns(\setting($settingPrefix.'.fields'));
 		$this->soqlManager->setBreakColumn(\setting($settingPrefix.'.breakField'));
 		$this->soqlManager->setUpdatedAfterDate($updatedAfterDate);
+		$this->soqlManager->setKey(\setting($settingPrefix.'.key'));
+		$this->addComment('mysqlQuery',$this->soqlManager->toMysqlInsertQuery());
+	}
+
+	public function addComment($key,$data)
+	{
+		$this->comments[$key] = $data;
+	}
+	
+	public function getComments()
+	{
+		return '<p style="width:600px;overflow:scroll;">'.implode('<br />',$this->comments).'</p>';
 	}
 
 	public function export()
@@ -62,6 +76,8 @@ class ForceToMySqlDataTransferManager
 	public function import(SfResult $result)
 	{
 		$counter = 0;
+		// print $this->soqlManager->toMysqlInsertQuery();
+		// return;
 		\get_connection()->query('LOCK TABLES '.$this->mysqlTable.' WRITE');
 		// $mysql = \db_query('LOCK TABLES '.$this->mysqlTable.' WRITE','pdo',true);
 
@@ -74,6 +90,5 @@ class ForceToMySqlDataTransferManager
 		}
 
 		\get_connection()->query('UNLOCK TABLES');
-		
 	}
 }
