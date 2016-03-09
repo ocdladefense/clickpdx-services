@@ -36,7 +36,11 @@ class ForceToMySqlDataTransferManager
 	
 	// throws a InvalidConnectionException
 	// throws a SettingNotFoundException
-	public function __construct($forceObjectName,$updatedAfterDate=null)
+	public function __construct(
+		$forceObjectName,
+		$conditionField=null,
+		$conditionValue=null
+	)
 	{
 		$this->forceObjectName = $forceObjectName;
 		$soqlService = $this->prepareApiService();
@@ -46,7 +50,8 @@ class ForceToMySqlDataTransferManager
 		$this->soqlManager->setTable($forceObjectName);
 		$this->soqlManager->setColumns(\setting($settingPrefix.'.fields'));
 		$this->soqlManager->setBreakColumn(\setting($settingPrefix.'.breakField'));
-		$this->soqlManager->setUpdatedAfterDate($updatedAfterDate);
+		$this->soqlManager->setConditionField($conditionField);
+		$this->soqlManager->setConditionValue($conditionValue);
 		$this->soqlManager->setKey(\setting($settingPrefix.'.key'));
 		$this->addComment('mysqlQuery',$this->soqlManager->toMysqlInsertQuery());
 	}

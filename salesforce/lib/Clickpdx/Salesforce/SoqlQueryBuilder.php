@@ -70,6 +70,11 @@ class SoqlQueryBuilder
 		$op = SoqlQueryBuilder::QUERY_OP_EQUALITY
 	)
 	{
+		if(count(func_get_args())==1)
+		{
+			$this->conditions = array($colName);
+			return;
+		}
 		$parts = array(
 			'colName' 	=> $colName,
 			'op' 				=> $op,
@@ -79,6 +84,7 @@ class SoqlQueryBuilder
 		$this->conditions = array(implode(' ',$parts));
 	}
 	
+
 	public function getQueryType()
 	{
 		return $this->queryType;

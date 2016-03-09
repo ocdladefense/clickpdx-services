@@ -15,7 +15,9 @@ class SoqlBatchSelectQueryManager
 	
 	private $soqlService;
 	
-	private $updatedAfterDate;
+	private $conditionField = 'LastModifiedDate';
+	
+	private $conditionValue;
 	
 	private $keys = array();
 	
@@ -44,12 +46,17 @@ class SoqlBatchSelectQueryManager
 		return $this;
 	}
 	
-	public function setUpdatedAfterDate($date=null)
+	public function setConditionValue($date=null)
 	{
 		if(!empty($date))
 		{
-			$this->updatedAfterDate = $date.'T00:00:00Z';
+			$this->conditionValue = $date;
 		}
+	}
+	
+	public function setConditionField($fieldName)
+	{
+		$this->conditionField = $fieldName;
 	}
 	
 	public function execute()
@@ -65,11 +72,15 @@ class SoqlBatchSelectQueryManager
 		$query->cols($this->columns);
 		$query->orderBy($this->breakColumn);
 		$query->limit($this->batchSize);
-		if(!empty($this->updatedAfterDate))
+		if(!empty($this->conditionField))
 		{
-			$query->dateCondition('LastModifiedDate',
-					$this->updatedAfterDate,
+			// Test if this is a date or not
+			// Basically test for the field type
+			$query->dateCondition($this->conditionField,
+					$this->conditionValue,
 					SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
+					
+			// $query->where('Ocdla_Interaction_Line_Item_ID__c = null');
 		}
 		if(!$this->soqlService->hasInstanceUrl())
 		{
@@ -90,6 +101,8 @@ class SoqlBatchSelectQueryManager
 			{
 				$query->condition('Ocdla_Auto_Number_Int__c',
 					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
+				// $query->condition('Ocdla_Auto_Number_Int__c',
+					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
 			$queries[] = $q = $query->compile();
 			$results->add($sfResult = $this->soqlService->executeQuery($q));
