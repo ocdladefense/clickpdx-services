@@ -68,8 +68,7 @@ class SalesforceRestApiService extends Service\HttpService
 		$data = json_decode($oauthResponse->read(),true);
 		if($data['error'])
 		{
-			print "<h2>Error: {$data['error_description']}</h2>";
-			throw new Exception($data['error_description']);
+			throw new Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
 			// throw new AuthenticationException($data['error_description']);
 		}
 		$this->setOAuthSession($data['access_token']);
