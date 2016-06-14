@@ -124,7 +124,7 @@ class SoqlBatchSelectQueryManager
 			$lastId = $sfResult->getLast()['Ocdla_Auto_Number_Int__c'];
 			if(empty($lastId))
 			{
-				throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
+				// throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
 			}
 			// print "<br />Testing condition: ".$curBatch++*$this->batchSize ." < {$numRecordsToProcess}...";
 		}
