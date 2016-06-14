@@ -11,6 +11,7 @@ class SoqlBatchSelectQueryManager
 	
 	private $table;
 
+	// This should correspond to the LIMIT clause
 	private $batchSize = 2000;
 	
 	private $soqlService;
@@ -61,11 +62,15 @@ class SoqlBatchSelectQueryManager
 	
 	public function execute()
 	{
-		$curBatch = 1;
+		// Once incremented the current batch will start at 1
+		//	+ i.e., the first batch.
+		$curBatch = 0;
 		
 		// A list of queries to be displayed on the template.
 		$queries = array();
 	
+		// Initially the delimiter id should be the Integer, 0
+		$lastId = 0;
 		
 		$query = new SoqlQueryBuilder();
 		$query->table($this->table);
@@ -87,8 +92,9 @@ class SoqlBatchSelectQueryManager
 			$this->soqlService->authorize();
 		}
 		$numRecordsToProcess = $this->soqlService->executeQuery($query->getCountQuery()->compile())->count();
-		$expectedNumBatches = $numRecordsToProcess/$batchSize;
-
+		$expectedNumBatches = $numRecordsToProcess / $this->batchSize;
+		
+		print "Total number of records that should be processed: ".$numRecordsToProcess;
 	
 		// Instantiate an empty result set.
 		//	+ We'll use this as a container for SOQL Contact results,
@@ -97,23 +103,32 @@ class SoqlBatchSelectQueryManager
 		do
 		{
 			// print "<br />Starting batch {$curBatch}...";
-			if($curBatch != 1)
+			if(++$curBatch != 1)
 			{
 				$query->condition('Ocdla_Auto_Number_Int__c',
-					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
+					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
 				// $query->condition('Ocdla_Auto_Number_Int__c',
 					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
 			$queries[] = $q = $query->compile();
 			$results->add($sfResult = $this->soqlService->executeQuery($q));
+			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
+			if($sfResult->hasError())
+			{
+				throw new \Exception($sfResult->getErrorMsg());
+			}
 			if(!$sfResult->count()>0)
 			{
-				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.");
+				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
 			$lastId = $sfResult->getLast()['Ocdla_Auto_Number_Int__c'];
+			if(empty($lastId))
+			{
+				throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
+			}
 			// print "<br />Testing condition: ".$curBatch++*$this->batchSize ." < {$numRecordsToProcess}...";
 		}
-		while($curBatch++*$this->batchSize < $numRecordsToProcess);
+		while($curBatch*$this->batchSize < $numRecordsToProcess);
 		$results->addComment($queries,'queries');
 		return $results;
 	}

@@ -105,7 +105,7 @@ class SalesforceRestApiService extends Service\HttpService
 			{
 				throw new RestApiAuthenticationException("Accessing the API Service at {$this->getInstanceUrl()} failed with error code: \n{$sfResult->getErrorCode()}.\n<br />".$sfResult->getErrorMsg());
 			}
-			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.");
+			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.  Query: {$query}.");
 		}
 		return $sfResult;
 	}

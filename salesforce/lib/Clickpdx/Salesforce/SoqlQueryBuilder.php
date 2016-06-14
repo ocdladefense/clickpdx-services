@@ -113,7 +113,8 @@ class SoqlQueryBuilder
 	public function condition(
 		$colName,
 		$colValue,
-		$op = SoqlQueryBuilder::QUERY_OP_EQUALITY
+		$op = SoqlQueryBuilder::QUERY_OP_EQUALITY,
+		$alias = null
 	)
 	{
 		$parts = array(
@@ -122,7 +123,11 @@ class SoqlQueryBuilder
 			'colValue'	=> is_string($colValue) ?
 				"'{$colValue}'" : $colValue
 		);
-		$this->conditions[] = implode(' ',$parts);
+		if($alias) {
+			$this->conditions[$alias] = implode(' ',$parts);
+		} else {
+			$this->conditions[] = implode(' ',$parts);
+		}
 	}
 	
 	public function dateCondition(
