@@ -36,10 +36,38 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 		$this->username = $c['username'];
 		$this->password = $c['password'];
 	}
+	
+	
+	public function authorize()
+	{
+		// Return an HttpRequest object to be sent to the Authorization Server.
+		$req = $this->getHttpRequest(OAuthGrantTypes::GRANT_PASSWORD);
+	
+		// Get a Redirect object whose output can be sent to the User-Agent.
+		// This basically redirects the user to the Authorization Server per the
+		// above Request.
+		$oauthResponse = $this->sendRequest($req);
+		
+		$data = json_decode($oauthResponse->read(),true);
+
+		if($data['error'])
+		{
+			throw new Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
+			// throw new AuthenticationException($data['error_description']);
+		}
+		
+		// $this->setOAuthSession($data['access_token']);
+		
+		// $this->saveInstanceUrlSession($data['instance_url']);
+		return $data;
+	}
+	
+	  
 	public function setAuthorizationCode($code)
 	{
 		$this->authorizationCode=$code;
 	}
+	
 	public function makeHttpResponse()
 	{
 		$this->httpResponse = new \Clickpdx\Http\HttpRedirect($this->authUri);
@@ -160,18 +188,26 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 	{
 		return $this->loginUri . $this->authEndpoint;
 	}
+	
+	
 	private function getAccessTokenUrl()
 	{
 		return $this->loginUri . $this->accessTokenEndpoint;
 	}
+	
+	
 	private function getAuthorizationEndpoint()
 	{
 		return $this->authEndpoint;
 	}
+	
+	
 	private function getAccessTokenEndpoint()
 	{
 		return $this->accessTokenEndpoint;
 	}
+	
+	
 	public function __construct(/*\OAuthParameterCollection*/$c)
 	{
 		if($c)
@@ -179,13 +215,16 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 			$this->setOAuthParams($c);
 		}
 	}
+	
+	
 	public function __toString()
 	{
-		$s[]= "Executed: {$this->executed}.";
+		$s[]= "Executed: " . ($this->executed ? "true" : "false");
 		$s[]= "loginUri: {$this->loginUri}.";
 		$s[]= "consumerId: {$this->consumerId}.";
 		$s[]= "redirectUri: {$this->redirectUri}.";				
 		$s[]= "authEndpoint: {$this->authEndpoint}.";				
+		$s[]= "accessTokenEndpoint: {$this->accessTokenEndpoint}.";
 		return implode('<br />',$s);
 	}
 }

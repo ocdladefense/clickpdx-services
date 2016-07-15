@@ -52,8 +52,8 @@ class SalesforceRestApiService extends Service\HttpService
 		$this->clientSecret = $c['clientSecret'];
 		$this->endpoints = $c['endpoints'];
 		$this->endpoint = $c['soqlEndpoint'];
-		$this->accessToken=$this->getSessionData('accessToken');
-		$this->instanceUrl=$this->getSessionData('instanceUrl');
+		$this->accessToken = $this->getSessionData('accessToken');
+		$this->instanceUrl = $this->getSessionData('instanceUrl');
 	}
 	
 	public function authorize()
@@ -78,20 +78,35 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function executeQuery($query)
 	{
+		// Sanity checks - make sure required credentials are supplied to the Salesforce Request.
 		if(!$this->hasInstanceUrl())
 		{
 			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
 		}
+
+		
+		if(!$this->hasAccessToken())
+		{
+			throw new RestApiAuthenticationException("No Access Token was provided with this API request or the Access Token isn't a valid length.");
+		}
+		
+
 		$this->soqlQuery($query);
+		
+		
 		if($this->debug)
 		{
-			print "<br />".$this->getSoqlQuery();
-			print "<br />Access Token is: ".$this->getAccessToken();
+			print "<h3>SOQL query is:</h3>".$this->getSoqlQuery();
+			print "<h3>Access Token is:</h3>".$this->getAccessToken();
 		}
+		
+		
 		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_SOQL);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
 		$apiResp = parent::sendRequest($apiReq);
 		$sfResult = new SfResult($apiResp);
+		
+		
 		if($this->debug)
 		{
 			print "Response length is: ".count($apiResp->__toString());
@@ -142,7 +157,7 @@ class SalesforceRestApiService extends Service\HttpService
 	{
 		if(!$this->hasInstanceUrl())
 		{
-			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
+			throw new RestApiInvalidUrlException("Instance URL is empty!");
 		}
 		$svc = ResourceLoader::getResource('forceApi');
 		$svc->setEndpoint('sobjects');
@@ -189,7 +204,13 @@ class SalesforceRestApiService extends Service\HttpService
 		return $this->accessToken;
 	}
 	
-
+	
+	public function hasAccessToken()
+	{
+		return (empty($this->accessToken) || strlen($this->accessToken) < 25) ? false : true;
+	}
+	
+  
 	
 	public function deleteAccessToken()
 	{
