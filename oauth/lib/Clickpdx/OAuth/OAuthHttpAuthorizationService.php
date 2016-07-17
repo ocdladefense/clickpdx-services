@@ -52,7 +52,7 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 
 		if($data['error'])
 		{
-			throw new Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
+			throw new \Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
 			// throw new AuthenticationException($data['error_description']);
 		}
 		
@@ -105,7 +105,7 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 	{
 		if(!isset($authorizationGrantType))
 		{
-			throw new Exception('A valid Authorization Grant Type is required.');
+			throw new \Exception('A valid Authorization Grant Type is required.');
 		}
 		switch($authorizationGrantType)
 		{
@@ -127,7 +127,7 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 	{//function checkrequestparams()
 		if(!isset($code))
 		{
-			throw new Exception('Authorization code required but missing from request');
+			throw new \Exception('Authorization code required but missing from request');
 		}
 	}
 

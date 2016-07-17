@@ -24,7 +24,7 @@ class ResourceLoader
 		}
 		else
 		{
-			throw new \Exception("No valid loader could be found for the resource {$name}.");
+			throw new \Exception("No valid loader could be found for the resource {$rName}.");
 		}
 	}
 	public static function initResources()
