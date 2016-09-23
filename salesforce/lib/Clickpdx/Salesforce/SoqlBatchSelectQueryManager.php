@@ -107,6 +107,8 @@ class SoqlBatchSelectQueryManager
 			{
 				$query->condition('Ocdla_Auto_Number_Int__c',
 					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
+				$query->condition($this->getBreakColumn(),
+					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
 				// $query->condition('Ocdla_Auto_Number_Int__c',
 					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
@@ -121,7 +123,7 @@ class SoqlBatchSelectQueryManager
 			{
 				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
-			$lastId = $sfResult->getLast()['Ocdla_Auto_Number_Int__c'];
+			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
 			if(empty($lastId))
 			{
 				// throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
@@ -147,6 +149,12 @@ class SoqlBatchSelectQueryManager
 	{
 		return self::MySQLTablePrefix .'_'.strtolower($this->table);
 	}
+	
+	public function getBreakColumn($column)
+	{
+		return $this->breakColumn;
+	}
+	
 
 	private function getValueBindings()
 	{
