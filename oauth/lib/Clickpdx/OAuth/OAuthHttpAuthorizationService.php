@@ -53,12 +53,7 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 		if($data['error'])
 		{
 			throw new \Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
-			// throw new AuthenticationException($data['error_description']);
 		}
-		
-		// $this->setOAuthSession($data['access_token']);
-		
-		// $this->saveInstanceUrlSession($data['instance_url']);
 		return $data;
 	}
 	

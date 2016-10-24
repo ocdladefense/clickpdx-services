@@ -124,6 +124,57 @@ class SalesforceRestApiService extends Service\HttpService
 		}
 		return $sfResult;
 	}
+
+	
+	public function updateRecord()
+	{
+		// Sanity checks - make sure required credentials are supplied to the Salesforce Request.
+		if(!$this->hasInstanceUrl())
+		{
+			throw new RestApiInvalidUrlException("Invalid URL given for this API.");
+		}
+
+		
+		if(!$this->hasAccessToken())
+		{
+			throw new RestApiAuthenticationException("No Access Token was provided with this API request or the Access Token isn't a valid length.");
+		}
+		
+		if($this->debug)
+		{
+			print "<h3>Access Token is:</h3>".$this->getAccessToken();
+		}
+		
+		
+		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_RECORD_UPDATE);
+		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
+		$apiReq->addHttpHeader('Content-type',"application/json");
+		if($debug)
+		{
+			print $apiReq;
+		}
+
+		$apiResp = parent::sendRequest($apiReq);
+		$sfResult = new SfResult($apiResp);
+		
+		
+		if($this->debug)
+		{
+			print "Response length is: ".count($apiResp->__toString());
+			print_r($apiResp);
+		}
+		// exit;
+
+		if($sfResult->hasError())
+		{
+			if($sfResult->getErrorCode() == 'INVALID_SESSION_ID')
+			{
+				throw new RestApiAuthenticationException("Accessing the API Service at {$this->getInstanceUrl()} failed with error code: \n{$sfResult->getErrorCode()}.\n<br />".$sfResult->getErrorMsg());
+			}
+			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.  Query: {$query}.");
+		}
+		return $sfResult;
+	}
 	
 	public function getObjectInfo($forceObjectName)
 	{
@@ -299,6 +350,11 @@ class SalesforceRestApiService extends Service\HttpService
 					$this->getRequestParamsByApiRequestType(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_SOQL)
 				);
 				$req = new \Clickpdx\Http\HttpPostRequest($this->instanceUrl . $this->endpoint.'?'.$qString);
+				return $req; // Don't add any additional parameters
+				break;
+			case SfRestApiRequestTypes::REST_API_REQUEST_TYPE_RECORD_UPDATE:
+				$req = new \Clickpdx\Http\HttpPostRequest($this->instanceUrl . 
+					$this->endpoint);
 				return $req; // Don't add any additional parameters
 				break;
 			default:
