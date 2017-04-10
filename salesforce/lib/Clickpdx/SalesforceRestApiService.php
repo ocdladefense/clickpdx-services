@@ -5,6 +5,7 @@ use Clickpdx\OAuth\OAuthGrantTypes;
 use Clickpdx\SfRestApiRequestTypes;
 use Clickpdx\Http\HttpRequest;
 use Clickpdx\Salesforce\SfResult;
+use Clickpdx\Salesforce\SObject;
 use Clickpdx\Salesforce\RestApiAuthenticationException;
 use Clickpdx\Salesforce\RestApiInvalidUrlException;
 
@@ -187,6 +188,9 @@ class SalesforceRestApiService extends Service\HttpService
 		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
 		$apiResp = parent::sendRequest($apiReq);
+		
+		return new SObject(json_decode($apiResp->read(),true));
+		/*
 		return json_decode($apiResp->read(),true);
 		
 		$sfResult = new SfResult($apiResp);
@@ -202,6 +206,7 @@ class SalesforceRestApiService extends Service\HttpService
 			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.");
 		}
 		return $sfResult;
+		*/
 	}
 	
 	function sfObjectsInfo($object)

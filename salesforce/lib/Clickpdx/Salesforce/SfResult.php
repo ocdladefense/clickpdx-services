@@ -4,26 +4,26 @@ namespace Clickpdx\Salesforce;
 
 class SfResult implements \IteratorAggregate, \ArrayAccess
 {
-	private $errorCode;
+	protected $errorCode;
 	
-	private $errorMsg;
+	protected $errorMsg;
 	
-	private $done;
+	protected $done;
 	
 	/**
 	 * member $records
 	 *
 	 * The actual records returned from the SOQL query.
 	 */
-	private $records = array();
+	protected $records = array();
 	
-	private $fields = array();
+	protected $fields = array();
 	
-	private $res;
+	protected $res;
 	
-	private $totalSize;
+	protected $totalSize;
 	
-	private $comments = array();
+	protected $comments = array();
 	
 	public function __construct($apiResp)
 	{
