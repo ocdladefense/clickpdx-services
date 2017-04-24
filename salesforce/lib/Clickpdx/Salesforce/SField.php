@@ -53,10 +53,20 @@ class SField// extends SfResult
 	public function getPicklistAsHtmlOptions()
 	{
 		$active = $this->getPicklistValues();
+		$opts = [];
+		$current = null;
+		$parents = array('Clinical','Evaluations');
 		
-		$opts = array_map(function($pick){
-			return '<option value="'.$pick['value'].'">'.$pick['label'].'</option>';
-		},$active);
+		foreach($active as $pick)
+		{
+			$value = $pick['value'];
+			$label = $pick['label'];
+			$cat = explode('/',$value)[0];
+			$parent = in_array($cat,$parents) ? $cat : null;
+			$l = $parent === null ? $label : ' --'.$label;
+			$opts[]='<option value="'.$value.'">'.$l.'</option>';
+		}
+
 		return implode($opts);
 	}
 	
