@@ -46,7 +46,24 @@ class SField// extends SfResult
 		});
 	}
 
+	// public function getPicklistValuesAssoc()
 
+	// getPicklistAsHtmlCheckboxes()
+
+	public function getPicklistAsHtmlOptions()
+	{
+		$active = $this->getPicklistValues();
+		
+		$opts = array_map(function($pick){
+			return '<option value="'.$pick['value'].'">'.$pick['label'].'</option>';
+		},$active);
+		return implode($opts);
+	}
+	
+	public function getPicklistAsHtmlSelect()
+	{
+		return '<select name="'.$this->json['name'].'">'.$this->getPicklistAsHtmlOptions() .'</select>';
+	}
 	
 	public function objectInfo()
 	{
