@@ -34,8 +34,6 @@ class SalesforceRestApiService extends Service\HttpService
 		{
 			$this->setParams($c);
 		}
-		$this->accessToken=$this->getSessionData('accessToken');
-		$this->instanceUrl=$this->getSessionData('instanceUrl');
 	}
 	
 	public function setDebug($init=false)
@@ -43,10 +41,21 @@ class SalesforceRestApiService extends Service\HttpService
 		$this->debug = $init;
 	}
 	
+	
+	// @TODO - These settings are redundant and should probably
+	// $this->soqlEndpoint = $c['soqlEndpoint'];
+	// $this->serviceEndpoint = $c['serviceEndpoint'];
+	// $this->endpoint = $c['soqlEndpoint'];
+
+	// @TODO - If the oauth data has already been requested and set then
+	//   we shouldn't make the request again.
+	// $this->accessToken = $this->getSessionData('accessToken');
+	// $this->instanceUrl = $this->getSessionData('instanceUrl');
 	public function setParams($c)
 	{
 		$this->appName = $c['entityId'];
 		$this->executed = false;
+		$this->debug = $c['debug'];
 		$this->soqlEndpoint = $c['soqlEndpoint'];
 		$this->serviceEndpoint = $c['serviceEndpoint'];
 		$this->consumerId = $c['consumerId'];
@@ -98,7 +107,7 @@ class SalesforceRestApiService extends Service\HttpService
 		if($this->debug)
 		{
 			print "<h3>SOQL query is:</h3>".$this->getSoqlQuery();
-			print "<h3>Access Token is:</h3>".$this->getAccessToken();
+			print "<h3>Access Token is:</h3><p>".$this->getAccessToken()."</p>";
 		}
 		
 		
@@ -110,8 +119,7 @@ class SalesforceRestApiService extends Service\HttpService
 		
 		if($this->debug)
 		{
-			print "Response length is: ".count($apiResp->__toString());
-			print_r($apiResp);
+			print "<h3>Response length is: </h3><p><pre>".print_r($apiResp,true)."</pre></p>";
 		}
 		// exit;
 

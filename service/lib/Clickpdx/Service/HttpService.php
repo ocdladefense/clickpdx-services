@@ -77,7 +77,8 @@ abstract class HttpService
 	
 	public function sessionToString()
 	{
-		return implode('<br />',$_SESSION[$this->appName]);
+		$heading = '<h1>Session data for '.$this->appName.'</h1>';
+		return $heading.implode('<br />',$_SESSION[$this->appName]);
 	}
 	
 	public function getSessionData($name)
