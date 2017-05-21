@@ -4,6 +4,7 @@ namespace Clickpdx\Salesforce;
 
 class SoqlBatchSelectQueryManager
 {
+	const FEATURE_NOT_READY = false;
 	
 	private $breakColumn;
 	
@@ -59,8 +60,8 @@ class SoqlBatchSelectQueryManager
 	{
 		$this->conditionField = $fieldName;
 	}
-	
-	public function execute()
+
+	public function executeQuery($query)
 	{
 		// Once incremented the current batch will start at 1
 		//	+ i.e., the first batch.
@@ -72,12 +73,12 @@ class SoqlBatchSelectQueryManager
 		// Initially the delimiter id should be the Integer, 0
 		$lastId = 0;
 		
-		$query = new SoqlQueryBuilder();
-		$query->table($this->table);
-		$query->cols($this->columns);
-		$query->orderBy($this->breakColumn);
-		$query->limit($this->batchSize);
-		if(!empty($this->conditionField))
+		// $query = new SoqlQueryBuilder();
+		// $query->table($this->table);
+		// $query->cols($this->columns);
+		// $query->orderBy($this->breakColumn);
+		// $query->limit($this->batchSize);
+		if(self::FEATURE_NOT_READY && !empty($this->conditionField))
 		{
 			// Test if this is a date or not
 			// Basically test for the field type
@@ -87,11 +88,12 @@ class SoqlBatchSelectQueryManager
 					
 			// $query->where('Ocdla_Interaction_Line_Item_ID__c = null');
 		}
+		$this->soqlService->setEndpoint('queryAll');
 		if(!$this->soqlService->hasInstanceUrl())
 		{
 			$this->soqlService->authorize();
 		}
-		$numRecordsToProcess = $this->soqlService->executeQuery($query->getCountQuery()->compile())->count();
+		$numRecordsToProcess = $this->soqlService->executeQuery($query)->count();
 		$expectedNumBatches = $numRecordsToProcess / $this->batchSize;
 		
 		print "Total number of records that should be processed: ".$numRecordsToProcess;
@@ -112,7 +114,82 @@ class SoqlBatchSelectQueryManager
 				// $query->condition('Ocdla_Auto_Number_Int__c',
 					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
-			$queries[] = $q = $query->compile();
+			$queries[] = $q = $query;//@jbernal->compile();
+			$results->add($sfResult = $this->soqlService->executeQuery($query));
+			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
+			if($sfResult->hasError())
+			{
+				throw new \Exception($sfResult->getErrorMsg());
+			}
+			if(!$sfResult->count()>0)
+			{
+				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
+			}
+			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
+			if(empty($lastId))
+			{
+				// throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
+			}
+			// print "<br />Testing condition: ".$curBatch++*$this->batchSize ." < {$numRecordsToProcess}...";
+		}
+		while($curBatch*$this->batchSize < $numRecordsToProcess);
+		$results->addComment($queries,'queries');
+		return $results;
+	}
+	
+	public function execute()
+	{
+		// Once incremented the current batch will start at 1
+		//	+ i.e., the first batch.
+		$curBatch = 0;
+		
+		// A list of queries to be displayed on the template.
+		$queries = array();
+	
+		// Initially the delimiter id should be the Integer, 0
+		$lastId = 0;
+		
+		$builder = new SoqlQueryBuilder();
+		$builder->table($this->table);
+		$builder->cols($this->columns);
+		$builder->orderBy($this->breakColumn);
+		$builder->limit($this->batchSize);
+		if(!empty($this->conditionField))
+		{
+			// Test if this is a date or not
+			// Basically test for the field type
+			$query->dateCondition($this->conditionField,
+					$this->conditionValue,
+					SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
+					
+			// $query->where('Ocdla_Interaction_Line_Item_ID__c = null');
+		}
+		if(!$this->soqlService->hasInstanceUrl())
+		{
+			$this->soqlService->authorize();
+		}
+		$numRecordsToProcess = $this->soqlService->executeQuery($builder->getCountQuery()->compile())->count();
+		$expectedNumBatches = $numRecordsToProcess / $this->batchSize;
+		
+		print "Total number of records that should be processed: ".$numRecordsToProcess;
+	
+		// Instantiate an empty result set.
+		//	+ We'll use this as a container for SOQL Contact results,
+		//	+ adding records to it, as necessary.
+		$results = new SfResult();
+		do
+		{
+			// print "<br />Starting batch {$curBatch}...";
+			if(++$curBatch != 1)
+			{
+				$builder->condition('Ocdla_Auto_Number_Int__c',
+					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
+				$builder->condition($this->getBreakColumn(),
+					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
+				// $builder->condition('Ocdla_Auto_Number_Int__c',
+					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
+			}
+			$queries[] = $q = $builder->compile();
 			$results->add($sfResult = $this->soqlService->executeQuery($q));
 			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
 			if($sfResult->hasError())

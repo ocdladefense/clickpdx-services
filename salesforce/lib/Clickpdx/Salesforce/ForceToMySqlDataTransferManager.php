@@ -66,8 +66,12 @@ class ForceToMySqlDataTransferManager
 		return '<p style="width:600px;overflow:scroll;">'.implode('<br />',$this->comments).'</p>';
 	}
 
-	public function export()
+	public function export($query)
 	{
+		if($query)
+		{
+			return $this->soqlManager->executeQuery($query);
+		}
 		return $this->soqlManager->execute();
 	}
 	
