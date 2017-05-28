@@ -158,11 +158,11 @@ class SoqlBatchSelectQueryManager
 		{
 			// Test if this is a date or not
 			// Basically test for the field type
-			$query->dateCondition($this->conditionField,
+			$builder->dateCondition($this->conditionField,
 					$this->conditionValue,
 					SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
 					
-			// $query->where('Ocdla_Interaction_Line_Item_ID__c = null');
+			// $builder->where('Ocdla_Interaction_Line_Item_ID__c = null');
 		}
 		if(!$this->soqlService->hasInstanceUrl())
 		{
