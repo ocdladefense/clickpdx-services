@@ -4,18 +4,17 @@ namespace Clickpdx\Salesforce;
 
 class SoqlBatchSelectQueryManager
 {
-	const MAX_NUM_BATCHES = 12;
+	const MAX_NUM_BATCHES = INF;
 	
 	const FEATURE_NOT_READY = false;
+	
+	const MAX_BATCH_SIZE = 100;
 	
 	private $breakColumn;
 	
 	private $columns;
 	
 	private $table;
-
-	// This should correspond to the LIMIT clause
-	private $batchSize = 2000;
 	
 	private $soqlService;
 	
@@ -69,6 +68,12 @@ class SoqlBatchSelectQueryManager
 		//	+ i.e., the first batch.
 		$curBatch = 0;
 		
+		// Max number of records to include in a batch.
+		$batchSize = \setting('force.import.maxBatchSize',self::MAX_BATCH_SIZE);
+		
+		// How many batches should be processed?
+		$maxBatches = \setting('force.import.maxBatches', self::MAX_NUM_BATCHES);
+		
 		// A list of queries to be displayed on the template.
 		$queries = array();
 	
@@ -79,7 +84,7 @@ class SoqlBatchSelectQueryManager
 		// $query->table($this->table);
 		// $query->cols($this->columns);
 		// $query->orderBy($this->breakColumn);
-		// $query->limit($this->batchSize);
+		// $query->limit(self::MAX_BATCH_SIZE);
 		if(self::FEATURE_NOT_READY && !empty($this->conditionField))
 		{
 			// Test if this is a date or not
@@ -96,7 +101,7 @@ class SoqlBatchSelectQueryManager
 			$this->soqlService->authorize();
 		}
 		$numRecordsToProcess = $this->soqlService->executeQuery($query)->count();
-		$expectedNumBatches = $numRecordsToProcess / $this->batchSize;
+		$expectedNumBatches = $numRecordsToProcess / $batchSize;
 		
 		print "Total number of records that should be processed: ".$numRecordsToProcess;
 	
@@ -132,9 +137,9 @@ class SoqlBatchSelectQueryManager
 			{
 				// throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
 			}
-			// print "<br />Testing condition: ".$curBatch++*$this->batchSize ." < {$numRecordsToProcess}...";
+			// print "<br />Testing condition: ".$curBatch++*$batchSize ." < {$numRecordsToProcess}...";
 		}
-		while($curBatch*$this->batchSize < $numRecordsToProcess);
+		while($curBatch*$batchSize < $numRecordsToProcess);
 		$results->addComment($queries,'queries');
 		
 		return $results;
@@ -151,8 +156,11 @@ class SoqlBatchSelectQueryManager
 		//	+ i.e., the first batch.
 		$curBatch = 0;
 		
+		// Max number of records to include in a batch.
+		$batchSize = \setting('force.import.maxBatchSize',self::MAX_BATCH_SIZE);
+		
 		// How many batches should be processed?
-		$maxBatches = \setting('force.import.object.contact.maxBatches', self::MAX_NUM_BATCHES);
+		$maxBatches = \setting('force.import.maxBatches', self::MAX_NUM_BATCHES);
 		
 		// A list of queries to be displayed on the template.
 		$queries = array();
@@ -166,7 +174,7 @@ class SoqlBatchSelectQueryManager
 		$builder->table($this->table);
 		$builder->cols($this->columns);
 		$builder->orderBy($this->breakColumn);
-		$builder->limit($this->batchSize);
+		$builder->limit($batchSize);
 		if(!empty($this->conditionField))
 		{
 			// Test if this is a date or not
@@ -191,7 +199,7 @@ class SoqlBatchSelectQueryManager
 		
 
 		
-		$expectedNumBatches = $numRecordsToProcess / $this->batchSize;
+		$expectedNumBatches = $numRecordsToProcess / $batchSize;
 		
 		print "<br />Expected number of batches is: ".$expectedNumBatches;
 		print "<br />Total number of records that should be processed: ".$numRecordsToProcess;
@@ -217,6 +225,7 @@ class SoqlBatchSelectQueryManager
 				// $builder->condition('Ocdla_Auto_Number_Int__c',
 					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
+			
 			$queries[] = $q = $builder->compile();
 			$results->add($sfResult = $this->soqlService->executeQuery($q));
 			
@@ -232,7 +241,7 @@ class SoqlBatchSelectQueryManager
 			}
 			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
 
-		} while($curBatch*$this->batchSize < $numRecordsToProcess);
+		} while($curBatch*$batchSize < $numRecordsToProcess);
 		
 		$results->addComment($queries,'queries');
 		

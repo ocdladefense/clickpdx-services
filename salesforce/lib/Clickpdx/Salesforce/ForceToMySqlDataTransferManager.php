@@ -10,6 +10,7 @@ use Clickpdx\Salesforce\RestApiInvalidUrlException;
 
 class ForceToMySqlDataTransferManager
 {
+
 	private $forceObjectName;
 	
 	private $soqlManager;
@@ -93,17 +94,18 @@ class ForceToMySqlDataTransferManager
 		$counter = 0;
 		// print $this->soqlManager->toMysqlInsertQuery();
 		// return;
-		\get_connection()->query('LOCK TABLES '.$this->mysqlTable.' WRITE');
-		// $mysql = \db_query('LOCK TABLES '.$this->mysqlTable.' WRITE','pdo',true);
+		// \get_connection()->query('LOCK TABLES '.$this->mysqlTable.' WRITE');
+//		$mysql = \db_query('LOCK TABLES '.$this->mysqlTable.' WRITE','pdo',true);
 
 		foreach($result as $record)
 		{
-			// if(++$counter>10) break;
+			if(++$counter > \setting('force.import.maxInsertRecords',INF)) break;
 			unset($record['attributes']);
 			//print "<br />{$record['Id']}";
 			\db_query($this->soqlManager->toMysqlInsertQuery(),$record,'pdo',false);
 		}
 
-		\get_connection()->query('UNLOCK TABLES');
+//		$mysql = \db_query('UNLOCK TABLES','pdo',true);
+		// \get_connection()->query('UNLOCK TABLES');
 	}
 }
