@@ -56,6 +56,8 @@ class ForceToMySqlDataTransferManager
 		$this->addComment('mysqlQuery',$this->soqlManager->toMysqlInsertQuery());
 	}
 
+
+
 	public function addComment($key,$data)
 	{
 		$this->comments[$key] = $data;
@@ -66,6 +68,8 @@ class ForceToMySqlDataTransferManager
 		return '<p style="width:600px;overflow:scroll;">'.implode('<br />',$this->comments).'</p>';
 	}
 
+
+
 	public function export($query)
 	{
 		if($query)
@@ -74,6 +78,8 @@ class ForceToMySqlDataTransferManager
 		}
 		return $this->soqlManager->execute();
 	}
+
+
 	
 	/**
 	 * 

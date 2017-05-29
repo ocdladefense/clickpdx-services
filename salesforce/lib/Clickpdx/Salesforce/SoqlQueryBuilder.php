@@ -48,7 +48,7 @@ class SoqlQueryBuilder
 		$this->cols = $cols;
 	}
 	
-	public function cols(array $cols)
+	public function cols($cols)
 	{
 		$this->columns(is_array($cols)?$cols:func_get_args());
 	}

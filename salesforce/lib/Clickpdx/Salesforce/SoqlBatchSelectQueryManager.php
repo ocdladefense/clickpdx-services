@@ -4,6 +4,8 @@ namespace Clickpdx\Salesforce;
 
 class SoqlBatchSelectQueryManager
 {
+	const MAX_NUM_BATCHES = 12;
+	
 	const FEATURE_NOT_READY = false;
 	
 	private $breakColumn;
@@ -134,20 +136,31 @@ class SoqlBatchSelectQueryManager
 		}
 		while($curBatch*$this->batchSize < $numRecordsToProcess);
 		$results->addComment($queries,'queries');
+		
 		return $results;
 	}
-	
+
+
+
+
 	public function execute()
 	{
+		$results = new SfResult();
+		
 		// Once incremented the current batch will start at 1
 		//	+ i.e., the first batch.
 		$curBatch = 0;
+		
+		// How many batches should be processed?
+		$maxBatches = \setting('force.import.object.contact.maxBatches', self::MAX_NUM_BATCHES);
 		
 		// A list of queries to be displayed on the template.
 		$queries = array();
 	
 		// Initially the delimiter id should be the Integer, 0
 		$lastId = 0;
+		
+
 		
 		$builder = new SoqlQueryBuilder();
 		$builder->table($this->table);
@@ -164,23 +177,38 @@ class SoqlBatchSelectQueryManager
 					
 			// $builder->where('Ocdla_Interaction_Line_Item_ID__c = null');
 		}
+		
+		
 		if(!$this->soqlService->hasInstanceUrl())
 		{
 			$this->soqlService->authorize();
 		}
 		$numRecordsToProcess = $this->soqlService->executeQuery($builder->getCountQuery()->compile())->count();
+		
+		if($numRecordsToProcess == 0) return $results;
+		
+		
+		
+
+		
 		$expectedNumBatches = $numRecordsToProcess / $this->batchSize;
 		
-		print "Total number of records that should be processed: ".$numRecordsToProcess;
+		print "<br />Expected number of batches is: ".$expectedNumBatches;
+		print "<br />Total number of records that should be processed: ".$numRecordsToProcess;
 	
 		// Instantiate an empty result set.
 		//	+ We'll use this as a container for SOQL Contact results,
 		//	+ adding records to it, as necessary.
-		$results = new SfResult();
+
 		do
 		{
+			++$curBatch;
+			if($curBatch > $maxBatches)
+			{
+				throw new \Exception('Match number of export batches exceeded: batch '.$curBatch);
+			}
 			// print "<br />Starting batch {$curBatch}...";
-			if(++$curBatch != 1)
+			if($curBatch != 1)
 			{
 				$builder->condition('Ocdla_Auto_Number_Int__c',
 					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
@@ -191,7 +219,9 @@ class SoqlBatchSelectQueryManager
 			}
 			$queries[] = $q = $builder->compile();
 			$results->add($sfResult = $this->soqlService->executeQuery($q));
+			
 			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
+			
 			if($sfResult->hasError())
 			{
 				throw new \Exception($sfResult->getErrorMsg());
@@ -201,21 +231,22 @@ class SoqlBatchSelectQueryManager
 				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
 			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
-			if(empty($lastId))
-			{
-				// throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
-			}
-			// print "<br />Testing condition: ".$curBatch++*$this->batchSize ." < {$numRecordsToProcess}...";
-		}
-		while($curBatch*$this->batchSize < $numRecordsToProcess);
+
+		} while($curBatch*$this->batchSize < $numRecordsToProcess);
+		
 		$results->addComment($queries,'queries');
+		
 		return $results;
 	}
+
+
 
 	public function setKeys($colNames)
 	{
 		$this->keys = $colNames;
 	}
+
+
 	
 	public function setKey($colName)
 	{
