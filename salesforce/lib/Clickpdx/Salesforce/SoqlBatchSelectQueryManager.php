@@ -205,7 +205,7 @@ class SoqlBatchSelectQueryManager
 			++$curBatch;
 			if($curBatch > $maxBatches)
 			{
-				throw new \Exception('Match number of export batches exceeded: batch '.$curBatch);
+				break;//throw new \Exception('Match number of export batches exceeded: batch '.$curBatch);
 			}
 			// print "<br />Starting batch {$curBatch}...";
 			if($curBatch != 1)
