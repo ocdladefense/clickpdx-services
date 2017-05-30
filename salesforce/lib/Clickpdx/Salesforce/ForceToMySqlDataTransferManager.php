@@ -93,9 +93,8 @@ class ForceToMySqlDataTransferManager
 	{
 		$counter = 0;
 		// print $this->soqlManager->toMysqlInsertQuery();
-		// return;
-		// \get_connection()->query('LOCK TABLES '.$this->mysqlTable.' WRITE');
-//		$mysql = \db_query('LOCK TABLES '.$this->mysqlTable.' WRITE','pdo',true);
+		$lockStmt = 'LOCK TABLES '.$this->mysqlTable.' WRITE';
+		\get_connection()->exec($lockStmt);
 
 		foreach($result as $record)
 		{
@@ -104,8 +103,6 @@ class ForceToMySqlDataTransferManager
 			//print "<br />{$record['Id']}";
 			\db_query($this->soqlManager->toMysqlInsertQuery(),$record,'pdo',false);
 		}
-
-//		$mysql = \db_query('UNLOCK TABLES','pdo',true);
-		// \get_connection()->query('UNLOCK TABLES');
+		\get_connection()->exec('UNLOCK TABLES');
 	}
 }
