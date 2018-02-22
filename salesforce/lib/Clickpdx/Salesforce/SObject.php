@@ -23,6 +23,11 @@ class SObject// extends SfResult
 		// $this->forceObjectName = $forceObjectName;
 	}
 	
+	public function getFields()
+	{
+		return $this->json['fields'];
+	}
+	
 	
 	
 	public function __toString()
