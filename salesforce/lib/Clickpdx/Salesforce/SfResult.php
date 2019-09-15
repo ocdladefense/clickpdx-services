@@ -29,13 +29,17 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	{
 		if(isset($apiResp))
 		{
-		$this->res = $res = json_decode($apiResp->read(),true);
-		$this->errorCode = $res[0]['errorCode'];
-		$this->errorMsg = $res[0]['message'];
-		$this->done = $res['done'];
-		$this->records = $res['records'];
-		$this->totalSize = $res['totalSize'];
-		$this->fields = array_keys($this->getFirst());
+			$this->res = $res = json_decode($apiResp->read(),true);
+		
+			if(isset($res[0])) {
+				$this->errorCode = $res[0]['errorCode'];
+				$this->errorMsg = $res[0]['message'];
+			}
+		
+			$this->done = $res['done'];
+			$this->records = $res['records'];
+			$this->totalSize = $res['totalSize'];
+			$this->fields = array_keys($this->getFirst());
 		}
 	}
 	

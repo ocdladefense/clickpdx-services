@@ -109,21 +109,7 @@ abstract class HttpService
 		}
 	}
 
-/*	
-	public function sendRequest($req)
-	{
-		switch($req->requestType())
-		{
-			case 'POST':
-				return $this->sendHttpPostRequest($req);
-				break;
-			case 'GET':
-				return $this->sendHttpGetRequest($req);
-				break;
-		}
-	}
-*/
-	
+
 	protected function sendHttpRequest($req)
 	{
 		

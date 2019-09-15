@@ -9,7 +9,7 @@ class HttpPostRequest extends HttpRequest
 	{
 		return $this->reqBody;
 	}
-	public function __construct($url,$params)
+	public function __construct($url,$params=array())
 	{
 		parent::__construct($url,$params);
 	}	

@@ -50,10 +50,11 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 		
 		$data = json_decode($oauthResponse->read(),true);
 
-		if($data['error'])
+		if(isset($data['error']))
 		{
 			throw new \Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
 		}
+		
 		return $data;
 	}
 	
@@ -66,10 +67,14 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 	public function makeHttpResponse()
 	{
 		$this->httpResponse = new \Clickpdx\Http\HttpRedirect($this->authUri);
+		
 		return $this;
 	}
 	
+	
+	
 	public function makeHttpRequest($type){}
+	
 	
 	public function getAccessToken()
 	{
@@ -83,7 +88,7 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 
 		$token_url = $this->getAccessTokenUrl();
 
-		$params->
+		$params-> 
 		
 		$req = $this->createHttpRequest($token_url,$params);
 	
@@ -202,15 +207,15 @@ class OAuthHttpAuthorizationService extends \Clickpdx\Service\HttpService
 		return $this->accessTokenEndpoint;
 	}
 	
-	
-	public function __construct(/*\OAuthParameterCollection*/$c)
+
+	public function __construct($c=null)
 	{
-		if($c)
+		if(null != $c)
 		{
 			$this->setOAuthParams($c);
 		}
 	}
-	
+
 	
 	public function __toString()
 	{

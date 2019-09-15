@@ -28,9 +28,9 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	private $debug;
 	
-	public function __construct(/*\OAuthParameterCollection*/$c)
+	public function __construct(/*\OAuthParameterCollection*/$c=array())
 	{
-		if($c)
+		if(!empty($c))
 		{
 			$this->setParams($c);
 		}
@@ -53,18 +53,20 @@ class SalesforceRestApiService extends Service\HttpService
 	// $this->instanceUrl = $this->getSessionData('instanceUrl');
 	public function setParams($c)
 	{
-		$this->appName = $c['entityId'];
+		$this->appName = isset($c['entityId']) ? $c['entityId'] : null;
 		$this->executed = false;
-		$this->debug = $c['debug'];
+		$this->debug = isset($c['debug']) ? $c['debug'] : false;
 		$this->soqlEndpoint = $c['soqlEndpoint'];
 		$this->serviceEndpoint = $c['serviceEndpoint'];
 		$this->consumerId = $c['consumerId'];
 		$this->clientSecret = $c['clientSecret'];
 		$this->endpoints = $c['endpoints'];
-		$this->endpoint = $c['soqlEndpoint'];
-		$this->accessToken = $this->getSessionData('accessToken');
-		$this->instanceUrl = $this->getSessionData('instanceUrl');
+		$this->endpoint = $c['soqlEndpoint'];//'/services/data/v29.0/queryAll';
+		
+		// $this->accessToken = $this->getSessionData('accessToken');
+		// $this->instanceUrl = $this->getSessionData('instanceUrl');
 	}
+
 	
 	public function authorize()
 	{
@@ -76,15 +78,20 @@ class SalesforceRestApiService extends Service\HttpService
 		// above Request.
 		$oauthResponse = $this->authenticationService->sendRequest($req);
 		$data = json_decode($oauthResponse->read(),true);
-		if($data['error'])
+		
+		if(isset($data['error']))
 		{
 			throw new Exception("<h2>{$data['error']}: {$data['error_description']}</h2>");
-			// throw new AuthenticationException($data['error_description']);
 		}
-		$this->setOAuthSession($data['access_token']);
-		$this->saveInstanceUrlSession($data['instance_url']);
+		
+		
+		$this->setAccessToken($data['access_token']);
+		$this->setInstanceUrl($data['instance_url']);
+		
 		return $oauthResponse;
 	}
+	
+	
 	
 	public function executeQuery($query)
 	{
@@ -113,7 +120,10 @@ class SalesforceRestApiService extends Service\HttpService
 		
 		$apiReq = $this->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_SOQL);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$this->getAccessToken()}");
+		
 		$apiResp = parent::sendRequest($apiReq);
+		
+		
 		$sfResult = new SfResult($apiResp);
 		
 		
@@ -131,6 +141,8 @@ class SalesforceRestApiService extends Service\HttpService
 			}
 			else throw new \Exception("There was an error executing the SOQL query: {$sfResult->getErrorMsg()}.  Query: {$query}.");
 		}
+		
+		
 		return $sfResult;
 	}
 
@@ -225,20 +237,25 @@ class SalesforceRestApiService extends Service\HttpService
 		}
 		$svc = ResourceLoader::getResource('forceApi');
 		$svc->setEndpoint('sobjects');
-		$apiReq=$svc->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
+		
+		$apiReq = $svc->getHttpRequest(SfRestApiRequestTypes::REST_API_REQUEST_TYPE_ENTITY);
 		$apiReq->addHttpHeader('Authorization',"OAuth {$svc->getAccessToken()}");
 		$apiResp = $svc->sendRequest($apiReq);
+		
 		$apiInfo = json_decode($apiResp->read(),true);
-		if($apiInfo['errorCode'])
+		
+		if(isset($apiInfo['errorCode']))
 		{
 			$svc->resetOAuthSession();
 		}
+		
+		
 		return $apiInfo;
 	}
 	
 	private function formatEndpoint($str,$params)
 	{
-		return \tokenize($str,$params);
+		return $this->tokenize($str,$params);
 	}
 	
 	public function setEndpoint($endpointId,$params)
@@ -251,6 +268,24 @@ class SalesforceRestApiService extends Service\HttpService
 		{
 			$this->endpoint=$this->getEndpoint($endpointId);
 		}
+	}
+	
+	public function entity_toString($entity)
+	{
+		if(!is_array($entity))
+		{
+			return htmlentities($entity);
+		}
+		return "<pre>".htmlentities(print_r($entity,true))."</pre>";
+	}
+
+	public function tokenize($str,$tokens)
+	{
+		foreach($tokens as $token=>$replace)
+		{
+			$str=str_replace('{'.$token.'}',$replace,$str);
+		}
+		return $str;
 	}
 	
 	public function getEndpoint($endpointId)
