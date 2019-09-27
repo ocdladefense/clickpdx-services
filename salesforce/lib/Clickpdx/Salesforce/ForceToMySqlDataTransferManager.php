@@ -98,7 +98,7 @@ class ForceToMySqlDataTransferManager
 
 		foreach($result as $record)
 		{
-			if(++$counter > \setting('force.import.maxInsertRecords',INF)) break;
+			if(++$counter > \setting('force.import.maxInsertRecords',4000)) break;
 			unset($record['attributes']);
 			//print "<br />{$record['Id']}";
 			\db_query($this->soqlManager->toMysqlInsertQuery(),$record,'pdo',false);
