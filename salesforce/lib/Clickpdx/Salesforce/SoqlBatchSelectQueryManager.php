@@ -95,7 +95,7 @@ class SoqlBatchSelectQueryManager
 					
 			// $query->where('Ocdla_Interaction_Line_Item_ID__c = null');
 		}
-		$this->soqlService->setEndpoint('queryAll');
+		$this->soqlService->setEndpoint('query');
 		if(!$this->soqlService->hasInstanceUrl())
 		{
 			$this->soqlService->authorize();
