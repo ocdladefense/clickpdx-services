@@ -26,8 +26,12 @@ class SoqlBatchSelectQueryManager
 	
 	const MySQLTablePrefix = 'force';
 	
-	public function __construct($soqlService,$table=null,$columns=array(),$breakColumn=null)
-	{
+	public function __construct(
+		$soqlService,
+		$table = null,
+		$columns = array(),
+		$breakColumn=null
+	) {
 		$this->soqlService = $soqlService;
 	}
 	

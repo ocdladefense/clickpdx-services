@@ -11,6 +11,8 @@ use Clickpdx\Salesforce\RestApiInvalidUrlException;
 class ForceToMySqlDataTransferManager
 {
 
+	private static $MAX_IMPORT_RECORDS = 20000;
+
 	private $forceObjectName;
 	
 	private $soqlManager;
@@ -98,7 +100,7 @@ class ForceToMySqlDataTransferManager
 
 		foreach($result as $record)
 		{
-			if(++$counter > \setting('force.import.maxInsertRecords',4000)) break;
+			if(++$counter > \setting('force.import.maxInsertRecords',self::MAX_IMPORT_RECORDS)) break;
 			unset($record['attributes']);
 			//print "<br />{$record['Id']}";
 			\db_query($this->soqlManager->toMysqlInsertQuery(),$record,'pdo',false);
