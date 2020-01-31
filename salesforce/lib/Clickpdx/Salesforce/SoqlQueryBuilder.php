@@ -185,6 +185,8 @@ class SoqlQueryBuilder
 		$countQuery->cols('COUNT()');
 		$countQuery->replaceConditions($this->getConditions());
 		
+		var_dump($countQuery);
+		
 		return $countQuery;
 	}
 	

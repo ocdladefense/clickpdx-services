@@ -92,7 +92,7 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	
 	public function count()
 	{
-		return isset($this->totalSize) ? $this->totalSize : 0;
+		return count($this->records);//isset($this->totalSize) ? $this->totalSize : 0;
 	}
 	
 	public function getLast()
