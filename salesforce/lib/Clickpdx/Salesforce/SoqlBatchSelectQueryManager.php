@@ -254,7 +254,7 @@ class SoqlBatchSelectQueryManager
 			
 			$lastId = $res->getLast()[$this->getBreakColumn()];
 
-		} while($runningCount < $numRecordsToProcess);
+		} while(false && $runningCount < $numRecordsToProcess);
 
 
 
