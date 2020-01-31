@@ -20,7 +20,7 @@ class SoqlBatchSelectQueryManager
 	
 	private $soqlService;
 	
-	private $conditionField = 'LastModifiedDate';
+	private $conditionField;
 	
 	private $conditionValue;
 	
@@ -51,17 +51,20 @@ class SoqlBatchSelectQueryManager
 		return $this;
 	}
 	
-	public function setConditionValue($date=null)
+	public function setConditionValue($value=null)
 	{
-		if(!empty($date))
+		if(!empty($value))
 		{
-			$this->conditionValue = $date;
+			$this->conditionValue = $value;
 		}
 	}
 	
 	public function setConditionField($fieldName)
 	{
-		$this->conditionField = $fieldName;
+		if(!empty($fieldName))
+		{
+			$this->conditionField = $fieldName;
+		}
 	}
 
 	public function executeQuery($query)
@@ -186,6 +189,7 @@ class SoqlBatchSelectQueryManager
 		{
 			// Test if this is a date or not
 			// Basically test for the field type
+			print "Condition field is not empty.<br />";
 			$builder->dateCondition($this->conditionField,
 					$this->conditionValue,
 					SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
@@ -202,11 +206,9 @@ class SoqlBatchSelectQueryManager
 		$countQuery = $builder->getCountQuery()->compile();
 		print "Count Query is: {$countQuery}<br />";
 		
-		try {
-			$numRecordsToProcess = $this->soqlService->executeQuery($countQuery)->count();
-		} catch(Exception $e) {
-			print "Found a spurious count query.";
-		}
+
+		$numRecordsToProcess = $this->soqlService->executeQuery($countQuery)->count();
+
 		
 		
 		if($numRecordsToProcess == 0) return $results;
@@ -231,12 +233,8 @@ class SoqlBatchSelectQueryManager
 
 			if($curBatch != 1)
 			{
-				$builder->condition('Ocdla_Auto_Number_Int__c',
-					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
 				$builder->condition($this->getBreakColumn(),
 					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
-				// $builder->condition('Ocdla_Auto_Number_Int__c',
-					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
 			
 			$queries[] = $q = $builder->compile();
