@@ -49,6 +49,7 @@ class ForceToMySqlDataTransferManager
 		$soqlService = $this->prepareApiService();
 		$settingPrefix = 'force.import.object.'.strtolower($forceObjectName);
 		$this->mysqlTable = \setting($settingPrefix.'.mysqlTableName');
+		
 		$this->soqlManager = new SoqlBatchSelectQueryManager($soqlService);
 		$this->soqlManager->setTable($forceObjectName);
 		$this->soqlManager->setColumns(\setting($settingPrefix.'.fields'));
@@ -56,6 +57,7 @@ class ForceToMySqlDataTransferManager
 		$this->soqlManager->setConditionField($conditionField);
 		$this->soqlManager->setConditionValue($conditionValue);
 		$this->soqlManager->setKey(\setting($settingPrefix.'.key'));
+		
 		$this->addComment('mysqlQuery',$this->soqlManager->toMysqlInsertQuery());
 	}
 

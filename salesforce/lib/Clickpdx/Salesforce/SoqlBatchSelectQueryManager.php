@@ -8,7 +8,7 @@ class SoqlBatchSelectQueryManager
 	
 	const FEATURE_NOT_READY = false;
 	
-	const MAX_BATCH_SIZE = 100;
+	const MAX_BATCH_SIZE = 1000;
 	
 	const FIRST_BATCH_ID = 1;
 	
