@@ -20,7 +20,7 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	private $accessToken;
 	
-	private $soqlQuery;
+	private $query;
 	
 	private $endpoints;
 	
@@ -95,8 +95,10 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function executeQuery($query)
 	{
-	
-		print "<br /><span style='font-weight:bold;'>About to execute API call using: {$query}</span><br />";
+
+		$this->query = $query;
+		
+		
 		
 		// Sanity checks - make sure required credentials are supplied to the Salesforce Request.
 		if(!$this->hasInstanceUrl())
@@ -111,7 +113,7 @@ class SalesforceRestApiService extends Service\HttpService
 		}
 		
 
-		$this->soqlQuery($query);
+
 		
 		
 		if($this->debug)
@@ -357,12 +359,12 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function soqlQuery($query)
 	{
-		$this->soqlQuery=$query;
+		$this->query=$query;
 	}
 	
 	public function getSoqlQuery()
 	{
-		return $this->soqlQuery;
+		return $this->query;
 	}
 	
 	public function makeHttpResponse(){}
@@ -422,7 +424,7 @@ class SalesforceRestApiService extends Service\HttpService
 		{
 			case SfRestApiRequestTypes::REST_API_REQUEST_TYPE_SOQL:
 				$params = array(
-					'q' => array($this->soqlQuery,true),
+					'q' => array($this->query,true),
 				);
 				break;
 		}
@@ -472,7 +474,7 @@ class SalesforceRestApiService extends Service\HttpService
 		$s[]= "endpoint: {$this->endpoint}.";
 		$s[]= "soqlEndpoint: {$this->soqlEndpoint}.";
 		$s[]= "consumerId: {$this->consumerId}.";		
-		$s[]= "soqlQuery: {$this->soqlQuery}.";
+		$s[]= "soqlQuery: {$this->query}.";
 		$s[]= "instanceUrl: {$this->instanceUrl}.";
 		return "<p style='background-color:#eee;'>".implode('<br />',$s)."</p>";
 	}

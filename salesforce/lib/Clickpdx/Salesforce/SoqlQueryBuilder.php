@@ -16,7 +16,13 @@ class SoqlQueryBuilder
 	
 	private $options = array();
 	
+	private $newOptions = array();
+	
 	private $cols = array();
+	
+	private $key = null;
+	
+	private $breakColumn = null;
 	
 	const QUERY_TYPE_SELECT = 'SELECT';
 	
@@ -43,6 +49,10 @@ class SoqlQueryBuilder
 		$this->options[] = implode(' ',$parts);
 	}
 	
+	public function addOption($key,$value) {
+		$this->newOptions[$key] = $value;
+	}
+	
 	public function columns(array $cols)
 	{
 		$this->cols = $cols;
@@ -51,6 +61,18 @@ class SoqlQueryBuilder
 	public function cols($cols)
 	{
 		$this->columns(is_array($cols)?$cols:func_get_args());
+	}
+	
+	public function getBreakColumn() {
+		return $this->breakColumn;
+	}
+	
+	public function setBreakColumn($col) {
+		$this->breakColumn = $col;
+	}
+	
+	public function setKey($key) {
+		$this->key = $key;
 	}
 	
 	public function table($tableName)
@@ -166,6 +188,21 @@ class SoqlQueryBuilder
 		return implode(' ',$this->options);
 	}
 	
+	private function formatNewOptions(){
+		$str = [];
+
+		if(!empty($this->newOptions["ORDER BY"])) {
+			$str []= "ORDER BY ".$this->newOptions["ORDER BY"];
+		}
+		
+		if(!empty($this->newOptions["LIMIT"])) {
+			$str []= "LIMIT ".$this->newOptions["LIMIT"];
+		}
+		
+		return implode(" ",$str);
+	}
+	
+	
 	public function compile()
 	{
 		return $this->query = implode(' ',array(
@@ -173,7 +210,8 @@ class SoqlQueryBuilder
 				'colList'			=> $this->formatColumnList(),
 				'table'				=> $this->formatTableName(),
 				'conditions'	=> $this->formatConditions(),
-				'options'			=> $this->formatOptions()
+				'options'			=> $this->formatOptions(),
+				'newOptions'	=> $this->formatNewOptions()
 			)
 		);
 	}
@@ -185,7 +223,7 @@ class SoqlQueryBuilder
 		$countQuery->cols('COUNT()');
 		$countQuery->replaceConditions($this->getConditions());
 		
-		var_dump($countQuery);
+		// var_dump($countQuery);
 		
 		return $countQuery;
 	}

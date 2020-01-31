@@ -2,6 +2,10 @@
 
 namespace Clickpdx\Salesforce;
 
+
+
+
+
 class SfResult implements \IteratorAggregate, \ArrayAccess
 {
 	protected $errorCode;
@@ -92,7 +96,11 @@ class SfResult implements \IteratorAggregate, \ArrayAccess
 	
 	public function count()
 	{
-		return count($this->records);//isset($this->totalSize) ? $this->totalSize : 0;
+		return count($this->records);
+	}
+	
+	public function aggregateCount() {
+		return isset($this->totalSize) ? $this->totalSize : 0;
 	}
 	
 	public function getLast()

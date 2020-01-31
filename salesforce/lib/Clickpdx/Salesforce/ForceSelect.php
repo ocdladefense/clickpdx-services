@@ -2,7 +2,7 @@
 
 namespace Clickpdx\Salesforce;
 
-class BatchManager
+class ForceSelect implements IteratorAggregator
 {
 	const MAX_NUM_BATCHES = INF;
 	
@@ -141,45 +141,6 @@ class BatchManager
 	{
 		$this->keys = array($colName);
 	}
-
-	private function getTable()
-	{
-		return self::MySQLTablePrefix .'_'.strtolower($this->table);
-	}
-	
-	public function getBreakColumn($column)
-	{
-		return $this->breakColumn;
-	}
-	
-
-	private function getValueBindings()
-	{
-		$ret = array_map(function($colName){
-			return ':'.$colName;
-		},$this->columns);
-		return implode(',',$ret);
-	}
-
-	private function getInsertPart()
-	{
-		return implode(',',$this->columns);
-	}
-	
-	private function getUpdatePart()
-	{
-		$tmp = array_diff($this->columns,$this->keys);
-		$ret = array_map(function($colName){
-			return $colName . '=VALUES('.$colName.')';
-		},$tmp);
-		return implode(',',$ret);
-	}
-
-	public function toMysqlInsertQuery()
-	{
-		return 'INSERT INTO ' . $this->getTable() .'(' .$this->getInsertPart() .')' .' VALUES('.$this->getValueBindings().') ON DUPLICATE KEY UPDATE '. $this->getUpdatePart();
-	}
-	
 
 
 }
