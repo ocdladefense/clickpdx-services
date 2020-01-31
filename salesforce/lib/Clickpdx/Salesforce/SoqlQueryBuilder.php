@@ -184,8 +184,36 @@ class SoqlQueryBuilder
 		$countQuery->table($this->table);
 		$countQuery->cols('COUNT()');
 		$countQuery->replaceConditions($this->getConditions());
+		
 		return $countQuery;
 	}
+	
+	
+	public static function fromSettings($object) {
+			$builder = new SoqlQueryBuilder();
+			
+			$pfx = 'force.import.object.'.strtolower($object);
+			
+			$builder->table(\setting($pfx.'.mysqlTableName'));
+			$builder->cols(\setting($pfx.'.fields'));
+			$builder->orderBy(\setting($pfx.'.breakField'));
+			// $builder->setKey(\setting($pfx.'.key'));
+			// $builder->limit($batchSize);
+			/* if(!empty($this->conditionField))
+			{
+				// Test if this is a date or not
+				// Basically test for the field type
+				$builder->dateCondition($this->conditionField,
+						$this->conditionValue,
+						SoqlQueryBuilder::QUERY_OP_GREATER_THAN);
+					
+				// $builder->where('Ocdla_Interaction_Line_Item_ID__c = null');
+			}
+			*/
+			
+			return $builder;
+	}
+	
 	
 	public function __toString()
 	{

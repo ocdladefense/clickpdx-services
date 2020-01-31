@@ -16,7 +16,7 @@ class SoqlBatchSelectQueryManager
 	
 	private $columns;
 	
-	private $table;
+	private $table; 
 	
 	private $soqlService;
 	
