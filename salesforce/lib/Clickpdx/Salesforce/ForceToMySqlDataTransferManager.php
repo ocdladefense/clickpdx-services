@@ -78,8 +78,9 @@ class ForceToMySqlDataTransferManager
 		if($query)
 		{
 			return $this->soqlManager->executeQuery($query);
+		} else {
+			return $this->soqlManager->execute();
 		}
-		return $this->soqlManager->execute();
 	}
 
 

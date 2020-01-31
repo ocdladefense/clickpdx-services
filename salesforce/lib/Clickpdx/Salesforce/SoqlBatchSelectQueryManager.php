@@ -133,7 +133,7 @@ class SoqlBatchSelectQueryManager
 			{
 				throw new \Exception($sfResult->getErrorMsg());
 			}
-			if(!$sfResult->count()>0)
+			if(false && !$sfResult->count()>0)
 			{
 				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
@@ -181,6 +181,7 @@ class SoqlBatchSelectQueryManager
 		$builder->cols($this->columns);
 		$builder->orderBy($this->breakColumn);
 		$builder->limit($batchSize);
+		
 		if(!empty($this->conditionField))
 		{
 			// Test if this is a date or not
@@ -197,7 +198,16 @@ class SoqlBatchSelectQueryManager
 		{
 			$this->soqlService->authorize();
 		}
-		$numRecordsToProcess = $this->soqlService->executeQuery($builder->getCountQuery()->compile())->count();
+		
+		$countQuery = $builder->getCountQuery()->compile();
+		print "Count Query is: {$countQuery}<br />";
+		
+		try {
+			$numRecordsToProcess = $this->soqlService->executeQuery($countQuery)->count();
+		} catch(Exception $e) {
+			print "Found a spurious count query.";
+		}
+		
 		
 		if($numRecordsToProcess == 0) return $results;
 
@@ -238,7 +248,7 @@ class SoqlBatchSelectQueryManager
 			{
 				throw new \Exception($res->getErrorMsg());
 			}
-			if(!$res->count()>0)
+			if(false && !$res->count()>0)
 			{
 				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
@@ -247,7 +257,9 @@ class SoqlBatchSelectQueryManager
 			$lastId = $res->getLast()[$this->getBreakColumn()];
 
 		} while($runningCount < $numRecordsToProcess);
-		
+
+
+
 		$results->addComment($queries,'queries');
 		
 		return $results;
