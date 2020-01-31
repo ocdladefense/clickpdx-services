@@ -95,6 +95,9 @@ class SalesforceRestApiService extends Service\HttpService
 	
 	public function executeQuery($query)
 	{
+	
+		print "<br /><span style='font-weight:bold;'>About to execute API call using: {$query}</span><br />";
+		
 		// Sanity checks - make sure required credentials are supplied to the Salesforce Request.
 		if(!$this->hasInstanceUrl())
 		{
