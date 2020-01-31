@@ -10,6 +10,8 @@ class SoqlBatchSelectQueryManager
 	
 	const MAX_BATCH_SIZE = 100;
 	
+	const FIRST_BATCH_ID = 1;
+	
 	private $breakColumn;
 	
 	private $columns;
@@ -26,12 +28,8 @@ class SoqlBatchSelectQueryManager
 	
 	const MySQLTablePrefix = 'force';
 	
-	public function __construct(
-		$soqlService,
-		$table = null,
-		$columns = array(),
-		$breakColumn=null
-	) {
+	public function __construct($soqlService,$table=null,$columns=array(),$breakColumn=null)
+	{
 		$this->soqlService = $soqlService;
 	}
 	
@@ -113,21 +111,24 @@ class SoqlBatchSelectQueryManager
 		//	+ We'll use this as a container for SOQL Contact results,
 		//	+ adding records to it, as necessary.
 		$results = new SfResult();
+		$runningCount = 0;
 		do
 		{
 			// print "<br />Starting batch {$curBatch}...";
-			if(++$curBatch != 1)
+			if(++$curBatch != self::FIRST_BATCH_ID)
 			{
-				$query->condition('Ocdla_Auto_Number_Int__c',
-					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
+				//$query->condition('Ocdla_Auto_Number_Int__c',
+					//$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
 				$query->condition($this->getBreakColumn(),
 					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
-				// $query->condition('Ocdla_Auto_Number_Int__c',
-					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
 			}
+			
 			$queries[] = $q = $query;//@jbernal->compile();
+			
 			$results->add($sfResult = $this->soqlService->executeQuery($query));
+			
 			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
+			
 			if($sfResult->hasError())
 			{
 				throw new \Exception($sfResult->getErrorMsg());
@@ -136,14 +137,15 @@ class SoqlBatchSelectQueryManager
 			{
 				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
+			
 			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
-			if(empty($lastId))
-			{
-				// throw new \Exception("The given auto field for delimiting batches was empty or not called from this batch's SELECT query.");
-			}
-			// print "<br />Testing condition: ".$curBatch++*$batchSize ." < {$numRecordsToProcess}...";
-		}
-		while($curBatch*$batchSize < $numRecordsToProcess);
+			$runningCount += $sfResult->count();
+
+		} while($runningCount < $numRecordsToProcess);
+		
+		// while($curBatch*$batchSize < $numRecordsToProcess);
+		
+		
 		$results->addComment($queries,'queries');
 		
 		return $results;
@@ -198,9 +200,6 @@ class SoqlBatchSelectQueryManager
 		$numRecordsToProcess = $this->soqlService->executeQuery($builder->getCountQuery()->compile())->count();
 		
 		if($numRecordsToProcess == 0) return $results;
-		
-		
-		
 
 		
 		$expectedNumBatches = $numRecordsToProcess / $batchSize;
@@ -217,9 +216,9 @@ class SoqlBatchSelectQueryManager
 			++$curBatch;
 			if($curBatch > $maxBatches)
 			{
-				break;//throw new \Exception('Match number of export batches exceeded: batch '.$curBatch);
+				throw new \Exception('Max number of export batches exceeded: batch '.$curBatch);
 			}
-			// print "<br />Starting batch {$curBatch}...";
+
 			if($curBatch != 1)
 			{
 				$builder->condition('Ocdla_Auto_Number_Int__c',
@@ -231,21 +230,23 @@ class SoqlBatchSelectQueryManager
 			}
 			
 			$queries[] = $q = $builder->compile();
-			$results->add($sfResult = $this->soqlService->executeQuery($q));
+			$results->add($res = $this->soqlService->executeQuery($q));
 			
-			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
+			print "<br />Found ".$res->count() . " records when delimiter id is: {$lastId}.";
 			
-			if($sfResult->hasError())
+			if($res->hasError())
 			{
-				throw new \Exception($sfResult->getErrorMsg());
+				throw new \Exception($res->getErrorMsg());
 			}
-			if(!$sfResult->count()>0)
+			if(!$res->count()>0)
 			{
 				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
 			}
-			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
+			$runningCount += $res->count();
+			
+			$lastId = $res->getLast()[$this->getBreakColumn()];
 
-		} while($curBatch*$batchSize < $numRecordsToProcess);
+		} while($runningCount < $numRecordsToProcess);
 		
 		$results->addComment($queries,'queries');
 		
