@@ -25,13 +25,9 @@ class BatchJob {
 	public function __construct(IBatchable $job, $scope) {
 		$this->context = new BatchContext($scope);
 
-		$count = 0;
 		$batches = $job->start($this->context);
-		// var_dump($batches);exit;
 		
 		foreach($batches as $coll) {
-			++$count;
-			$this->context->addMessage("Executing batch $count");
 			$job->execute($this->context,$coll);
 		}
 		

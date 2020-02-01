@@ -129,7 +129,7 @@ class ForceSelect implements \Iterator // extends SalesforceRestApiService // im
 	 */
 	public function export()
 	{
-
+		$this->log("Executing batch ".$this->curBatch+1);
 		$results = new SfResult();
 		
 		
