@@ -80,6 +80,10 @@ class SoqlQueryBuilder
 		$this->table = $tableName;
 	}
 	
+	public function getTable() {
+		return $this->table;
+	}
+	
 	public function formatTableName()
 	{
 		return implode(' ',array("FROM",$this->table));

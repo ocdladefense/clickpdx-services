@@ -23,20 +23,18 @@ class MysqlImporter
 	private $columns = array();
 	
 	private $keys = array();
-	
+
+
+
 	// throws a InvalidConnectionException
 	// throws a SettingNotFoundException
-	public function __construct($query, $table)
+	public function __construct($query)
 	{
-	
 		$this->query = $query;
 		
-		
-		$this->table = $table;
+		$this->table = "force_".strtolower($query->getTable());
 		
 		$this->columns = $query->getColumnList();
-		// $this->keys = 
-
 	}
 
 
@@ -54,59 +52,73 @@ class MysqlImporter
 	public function import(SfResult $result)
 	{
 		$counter = 0;
-		// print $this->soqlManager->toMysqlInsertQuery();
+
 		$lockStmt = 'LOCK TABLES '.$this->table.' WRITE';
-		print $lockStmt;
+
 		\get_connection()->exec($lockStmt);
 
 		foreach($result as $record)
 		{
 			if(++$counter > self::MAX_IMPORT_RECORDS) break;
 			unset($record['attributes']);
-			//print "<br />{$record['Id']}";
+
 			\db_query($this->toMysqlInsertQuery(),$record,'pdo',false);
 		}
 		
 		\get_connection()->exec('UNLOCK TABLES');
 	}
 
+
+
 	public function getQueries(SfResult $result) {
 		$counter = 0;
+		
 		foreach($result as $record)
 		{
-		if(++$counter == 5) break;
-		print "<p>{$this->toMysqlInsertQuery()}</p>";
+			if(++$counter == 5) break;
+			print "<p>{$this->toMysqlInsertQuery()}</p>";
 		}
 	}
+
+
 
 	private function getValueBindings()
 	{
 		$ret = array_map(function($colName){
 			return ':'.$colName;
 		},$this->columns);
+		
 		return implode(',',$ret);
 	}
 
+
+
 	private function getInsertPart()
 	{
-		// $clean = array_diff($this->columns,array($this->query->getBreakColumn()));
 		return implode(',',$this->columns);
 	}
+	
+	
 	
 	private function getUpdatePart()
 	{
 		$clean = array_diff($this->columns,$this->keys);
-		// $tmp = array_diff($clean,array($this->query->getBreakColumn()));
+
 		$ret = array_map(function($colName){
 			return $colName . '=VALUES('.$colName.')';
 		},$clean);
+		
 		return implode(',',$ret);
 	}
+
+
 
 	public function toMysqlInsertQuery()
 	{
 		return 'INSERT INTO ' . $this->table .'(' .$this->getInsertPart() .')' .' VALUES('.$this->getValueBindings().') ON DUPLICATE KEY UPDATE '. $this->getUpdatePart();
 	}
+	
+	
 	
 	public function __toString(){
 		return implode("<br />", array(

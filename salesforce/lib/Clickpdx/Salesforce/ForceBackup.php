@@ -1,75 +1,88 @@
 <?php
 
-class ForceBackup implements Batchable {
+
+use Clickpdx\Salesforce\IBatchable;
+use Clickpdx\Salesforce\ForceSelect;
+use Clickpdx\Salesforce\MysqlImporter;
+
+namespace Clickpdx\Salesforce;
+
+
+
+
+
+class ForceBackup implements IBatchable {
 
 
     
     private static $IS_TEST = True;
 
     
-    public ForceBackup(Integer theLimit){
-        theQuery += ' LIMIT '+theLimit;
-    }
-    
-    public ForceBackup(){}
-    
 
- 
+    
+    private $api;
+    
+    private $soql;
+    
+    private $batchSize;
+
+
+ 		
+
+
+    public function __construct(){}
+ 		
+ 		public function setApi($api) {
+ 			$this->api = $api;
+ 		}
+ 		
+ 		public function setSoql($soql) {
+ 			$this->soql = $soql;
+ 		}
+ 		
 		/*global Iterable<DupContactCollection>*/
-		public function start(Database.BatchableContext bc) {
-	    String contents = DuplicateContactInfo.loadStaticResourceAsString(TAB_STATIC_RESOURCE_NAME);
-        String[] dupIds = contents.split('\n');
-        
-        return new CustomIterator(dupIds);
+		// public function start(Database.BatchableContext bc) {
+		public function start($context) {
+
+			$select = new ForceSelect($this->api,$this->soql,$context->getBatchSize());
+
+			$context->addMessage($select->getLog());
+
+			return $select;
+			
+			// return $select;
+			// print "<pre>".print_r($records[0],true)."</pre>";
+			// print "<pre>".print_r($records[count($records)-1],true)."</pre>";
+		
+			// print $mysql->getQueries($records);
     }
+    
+    
     
     /*global void*/
-    public function execute(Database.BatchableContext bc, List<DupContactCollection> scope){
-        for(DupContactCollection coll : scope){
-            try {
-                if(IS_TEST && coll.hasPrimaryContact()){
-                    coll.saveInfo();
-                } else if(!IS_TEST && coll.hasPrimaryContact()){
-                    coll.saveResult();
-                    coll.doMerge();
-                } // else throw new DupResolutionException('No primary contact found for '+coll.memberId);
-            } catch(Exception e){
-                coll.saveError(e);
-            }
-        }
-        
-        
-			// $select = new ForceQuery($builder);
-			/*
-			foreach($force->execute($builder) as $results) {
+    // public function execute(Database.BatchableContext bc, List<DupContactCollection> scope){
+    public function execute($context, $coll) {
+    
+			$mysql = new MysqlImporter($this->soql);
 			
-			}
+			$mysql->import($coll);
 
-
-			Job::schedule($backup,500);
-			
-	
 			// batch manager should execute sequential queries, processing the result of each batch through 
 			// an executor
 			// $this->addComment('mysqlQuery',$this->soqlManager->toMysqlInsertQuery());
-			*/
 
 
-
-			// Get the records from Salesforce.
-			// $records = $manager->export();
-			
-			// Put the records into MySQL table.
-			// $manager->import($records); 
     }
     
     
 
     
+    public function finish($bc){
     
+    }
     
-    /*global void*/
-    public function finish(/* Database.BatchableContext*/ bc){
+    /*global void
+    public function finish( $bc){
         // Get the ID of the AsyncApexJob representing this batch job
         // from Database.BatchableContext.
         // Query the AsyncApexJob object to retrieve the current job's information.
@@ -90,6 +103,7 @@ class ForceBackup implements Batchable {
         
         Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
     }
+    */
     
 
 

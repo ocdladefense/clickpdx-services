@@ -2,127 +2,176 @@
 
 namespace Clickpdx\Salesforce;
 
-class ForceSelect implements IteratorAggregator
+
+
+use Clickpdx\SalesforceRestApiService;
+
+
+
+
+/**
+ * Soql Batch Query Manager
+ *
+ * Make a connection to Salesforce and query records for
+ *  the given query.
+ *
+ * Loop through the records in batches of 1000 (as of 1/30/2020.)
+ */
+ 
+class ForceSelect implements \Iterator // extends SalesforceRestApiService // implements IteratorAggregator
 {
+
 	const MAX_NUM_BATCHES = INF;
+	
 	
 	const FEATURE_NOT_READY = false;
 	
-	const MAX_BATCH_SIZE = 100;
 	
-	private $breakColumn;
-	
-	private $columns;
-	
-	private $table;
-	
-	private $soqlService;
-	
-	private $conditionField = 'LastModifiedDate';
-	
-	private $conditionValue;
-	
-	private $keys = array();
-	
-	const MySQLTablePrefix = 'force';
+	const MAX_BATCH_SIZE = 1000;
 	
 	
+	const FIRST_BATCH_ID = 1;
 	
 	
+	// Reference to the query builder.
+	private $query;
+
+
+	private $api;
+
 	
-	public function __construct($builder) {
-		$this->builder = $builder;
+	private $batchSize;
+
+
+	private $totalRecords;
+	
+		
+	private $numBatches;
+	
+	// Start at first batch,
+	//  advance through batches with each iteration.
+	private $curBatch = 0;
+	
+	
+	private $running = 0;
+	
+	
+	private $lastId = 0;
+	
+	
+	private $logs = array();
+	
+	
+	private function log($msg) {
+		$this->logs []= $msg;
+	}
+	
+	
+	public function getLog() {
+		return $this->logs;
+	}
+	
+	
+	public function __construct($api,$query,$batchSize){
+		$this->api = $api;
+		$this->query = $query;
+		$this->batchSize = $batchSize;
+		
+		$this->countQuery = $query->getCountQuery()->compile();
+		$this->log("Count Query is: {$this->countQuery}");
+		
+
+		$this->totalRecords = $this->api->executeQuery($this->countQuery)->aggregateCount();
+		$this->log("Number of records to process is: {$this->totalRecords}");
+		
+		$this->numBatches = $this->totalRecords / $this->batchSize;
+		$this->log("Number of expected batches: {$this->numBatches}");
+	}
+
+	
+
+	
+	public function next() {
+		return $this->curBatch++;
+	}
+	
+	public function rewind() {
+		$this->curBatch = 0;
+	}
+	
+	public function valid() {
+		return $this->key() < $this->numBatches;
+	}
+	
+	public function key() {
+		return $this->curBatch;
 	}
 
 
-	// public function executeQuery($query)
+
+	
+	/*
+	 * Make each batch accessible via PHP's iterable interface.
+	 *  This way we can loop through the 
+	 */
+	public function current() {
+		$this->log("Starting batch ".($this->curBatch +1));
+		return $this->export();
+	}
+	
 
 
-
-
-	public function execute()
+	/*
+	 * @method export
+	 *
+	 * Return the results of one "batch" of records retrieved from Salesforce.
+	 *
+	 */
+	public function export()
 	{
+
 		$results = new SfResult();
 		
-		// Once incremented the current batch will start at 1
-		//	+ i.e., the first batch.
-		$curBatch = 0;
-		
-		// Max number of records to include in a batch.
-		$batchSize = \setting('force.import.maxBatchSize',self::MAX_BATCH_SIZE);
-		
-		// How many batches should be processed?
-		$maxBatches = \setting('force.import.maxBatches', self::MAX_NUM_BATCHES);
 		
 		// A list of queries to be displayed on the template.
 		$queries = array();
-	
-		// Initially the delimiter id should be the Integer, 0
-		$lastId = 0;
-		
 
 		
+		$builder = $this->query;
 
+		// If there are no records then return an empty result object.
+		if($this->totalRecords == 0) return $results;		
 		
-		
-		if(!$this->soqlService->hasInstanceUrl())
+
+
+		if($this->curBatch != 0)
 		{
-			$this->soqlService->authorize();
+			$builder->condition($builder->getBreakColumn(),
+				$this->lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
 		}
 		
-		
-		$count = $this->soqlService->executeQuery($this->builder->getCountQuery()->compile())->count();
-		
-		if($count === 0) return $results;
+		$queries[] = $q = $builder->compile();
 		
 		
+		$this->log("Query: {$q}");
 		
-
+		$results->add($res = $this->api->executeQuery($q));
 		
-		$expectedNumBatches = $numRecordsToProcess / $batchSize;
+		$this->log("Found ".$res->count() . " records when delimiter id is: {$this->lastId}.");
 		
-		print "<br />Expected number of batches is: ".$expectedNumBatches;
-		print "<br />Total number of records that should be processed: ".$numRecordsToProcess;
-	
-		// Instantiate an empty result set.
-		//	+ We'll use this as a container for SOQL Contact results,
-		//	+ adding records to it, as necessary.
-
-		do
+		if($res->hasError())
 		{
-			++$curBatch;
-			if($curBatch > $maxBatches)
-			{
-				break;//throw new \Exception('Match number of export batches exceeded: batch '.$curBatch);
-			}
-			// print "<br />Starting batch {$curBatch}...";
-			if($curBatch != 1)
-			{
-				$builder->condition('Ocdla_Auto_Number_Int__c',
-					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
-				$builder->condition($this->getBreakColumn(),
-					$lastId,SoqlQueryBuilder::QUERY_OP_GREATER_THAN,'delimiter');
-				// $builder->condition('Ocdla_Auto_Number_Int__c',
-					// $lastId,SoqlQueryBuilder::QUERY_OP_EQUALITY);
-			}
-			
-			$queries[] = $q = $builder->compile();
-			$results->add($sfResult = $this->soqlService->executeQuery($q));
-			
-			print "<br />Found ".$sfResult->count() . " records when delimiter id is: {$lastId}.";
-			
-			if($sfResult->hasError())
-			{
-				throw new \Exception($sfResult->getErrorMsg());
-			}
-			if(!$sfResult->count()>0)
-			{
-				throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$curBatch}.  Query was: {$q}.");
-			}
-			$lastId = $sfResult->getLast()[$this->getBreakColumn()];
-
-		} while($curBatch*$batchSize < $numRecordsToProcess);
+			throw new \Exception($res->getErrorMsg());
+		}
+		if(false && !$res->count()>0)
+		{
+			throw new \Exception("Expected to complete {$expectedNumBatches} batches but only completed {$this->curBatch}.  Query was: {$q}.");
+		}
+		$this->running += $res->count();
 		
+		$this->lastId = $res->getLast()[$builder->getBreakColumn()];
+
+
 		$results->addComment($queries,'queries');
 		
 		return $results;
@@ -130,17 +179,7 @@ class ForceSelect implements IteratorAggregator
 
 
 
-	public function setKeys($colNames)
-	{
-		$this->keys = $colNames;
-	}
 
-
-	
-	public function setKey($colName)
-	{
-		$this->keys = array($colName);
-	}
 
 
 }
