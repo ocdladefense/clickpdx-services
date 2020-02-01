@@ -126,7 +126,7 @@ class ForceSelect implements \Iterator // extends SalesforceRestApiService // im
 	 *
 	 * Return the results of one "batch" of records retrieved from Salesforce.
 	 *
-	 */
+	 */ 
 	public function export()
 	{
 		$this->log("Executing batch ".$this->curBatch+1);
